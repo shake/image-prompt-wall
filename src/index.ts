@@ -842,6 +842,7 @@ function renderPage(options: {
         cursor: pointer;
       }
       .admin-layout { display: grid; grid-template-columns: minmax(0, 0.88fr) minmax(360px, 1.12fr); gap: 24px; padding: 24px 0 44px; align-items: start; }
+      .admin-workspace { display: grid; gap: 24px; min-width: 0; }
       .stack { display: grid; gap: 16px; }
       .admin-panel label { display: grid; gap: 8px; font-weight: 600; font-size: 14px; color: var(--muted); }
       .admin-panel .input, .admin-panel .textarea, .admin-panel .select {
@@ -1254,6 +1255,7 @@ function renderAdminPage(request: Request, lang: Lang, theme: Theme, categories:
   const copy = ui(lang);
   const entryCountLabel = lang === "zh" ? "张图" : "images";
   const createdLabel = lang === "zh" ? "已创建。" : "Created.";
+  const emptyPreviewLabel = lang === "zh" ? "选择左侧条目查看详情，或直接新增一条提示词。" : "Select an entry on the left to preview it, or create a new one.";
   const loadFailedLabel = lang === "zh" ? "无法加载条目。" : "Unable to load entries.";
   const emptyEntriesLabel = lang === "zh" ? "还没有内容。" : "No entries yet.";
   const categoryOptions = [...DEFAULT_CATEGORIES, ...categories]
@@ -1269,9 +1271,47 @@ function renderAdminPage(request: Request, lang: Lang, theme: Theme, categories:
       ${renderTopBar("admin", lang, theme, SITE_TITLE, copy.subtitle)}
       <main class="shell">
         <section class="admin-layout">
-          <article class="admin-panel">
-            <h1>${htmlEscape(copy.addPrompt)}</h1>
-            <p class="helper">${htmlEscape(lang === "zh" ? "上传图片，粘贴提示词，填写标题和分类后即可发布。之后也可以继续编辑并补充更多图片。" : "Upload images, paste the prompt, set a title and category, then publish. Add more images later by editing the entry.")}</p>
+          <article class="admin-workspace">
+            <section class="detail admin-preview" id="adminPreview">
+              <article class="viewer">
+                <img id="previewMainImage" class="main-image" alt="" hidden />
+                <div class="viewer-actions">
+                  <button class="icon-action buttonless" type="button" data-preview-open aria-label="${htmlEscape(copy.viewOriginal)}">${iconOpen()}</button>
+                  <a class="icon-action" data-preview-download href="#" download aria-label="${htmlEscape(copy.download)}">${iconDownload()}</a>
+                  <button class="icon-action buttonless" type="button" data-preview-edit aria-label="${htmlEscape(copy.edit)}">${iconEdit()}</button>
+                </div>
+                <div class="image-caption">
+                  <div class="image-title" id="previewTitle">${htmlEscape(emptyPreviewLabel)}</div>
+                  <div class="image-meta">
+                    <span id="previewCategory">-</span>
+                    <span class="dot"></span>
+                    <span id="previewVisibility">-</span>
+                    <span class="dot"></span>
+                    <span id="previewDate">-</span>
+                    <span class="dot"></span>
+                    <span id="previewCount">-</span>
+                  </div>
+                  <div class="image-tags" id="previewTags"></div>
+                </div>
+              </article>
+              <aside class="panel">
+                <div class="section">
+                  <div class="actions icon-row" style="margin-top:0; justify-content: space-between; align-items: center;">
+                    <h2 style="margin:0;">${htmlEscape(copy.prompt)}</h2>
+                    <button class="icon-action" type="button" data-preview-copy aria-label="${htmlEscape(copy.copyPrompt)}">${iconCopy()}</button>
+                  </div>
+                  <pre class="prompt" id="previewPrompt">${htmlEscape(emptyPreviewLabel)}</pre>
+                </div>
+                <div class="section">
+                  <h2>${htmlEscape(copy.note)}</h2>
+                  <div class="remark" id="previewNote">${htmlEscape(emptyPreviewLabel)}</div>
+                </div>
+              </aside>
+            </section>
+
+            <article class="admin-panel">
+              <h1>${htmlEscape(copy.addPrompt)}</h1>
+              <p class="helper">${htmlEscape(lang === "zh" ? "点击左侧条目先查看详情，再点编辑回到这里修改标题、分类、标签、提示词和备注。" : "Click an item on the left to preview it, then hit Edit to come back here and change the title, category, tags, prompt, and note.")}</p>
             <form id="entryForm" class="stack" enctype="multipart/form-data">
               <input type="hidden" name="id" id="entryId" />
               <div class="row">
@@ -1308,6 +1348,7 @@ function renderAdminPage(request: Request, lang: Lang, theme: Theme, categories:
               <div id="formStatus" class="status"></div>
             </form>
           </article>
+          </article>
           <aside class="admin-list">
             <div class="actions" style="margin-top:0;">
               <button class="button secondary" id="refreshListButton" type="button">${htmlEscape(copy.refreshList)}</button>
@@ -1332,7 +1373,22 @@ function renderAdminPage(request: Request, lang: Lang, theme: Theme, categories:
       const publicField = document.getElementById('publicField');
       const entryIdField = document.getElementById('entryId');
       const imagesField = document.getElementById('imagesField');
+      const previewMainImage = document.getElementById('previewMainImage');
+      const previewTitle = document.getElementById('previewTitle');
+      const previewCategory = document.getElementById('previewCategory');
+      const previewVisibility = document.getElementById('previewVisibility');
+      const previewDate = document.getElementById('previewDate');
+      const previewCount = document.getElementById('previewCount');
+      const previewTags = document.getElementById('previewTags');
+      const previewPrompt = document.getElementById('previewPrompt');
+      const previewNote = document.getElementById('previewNote');
+      const previewDownload = document.querySelector('[data-preview-download]');
+      const previewOpen = document.querySelector('[data-preview-open]');
+      const previewCopy = document.querySelector('[data-preview-copy]');
+      const previewEdit = document.querySelector('[data-preview-edit]');
       const entryDeleteLabel = ${JSON.stringify(copy.delete)};
+      let selectedEntryId = '';
+      let selectedEntryDetail = null;
 
       function clearForm() {
         form.reset();
@@ -1342,11 +1398,65 @@ function renderAdminPage(request: Request, lang: Lang, theme: Theme, categories:
         publicField.checked = true;
       }
 
+      function setPreview(detail) {
+        selectedEntryId = detail.id;
+        selectedEntryDetail = detail;
+        if (previewMainImage instanceof HTMLImageElement) {
+          previewMainImage.src = detail.coverImageUrl;
+          previewMainImage.alt = detail.title;
+          previewMainImage.hidden = false;
+        }
+        if (previewDownload instanceof HTMLAnchorElement) {
+          previewDownload.href = detail.coverImageUrl;
+        }
+        if (previewTitle) previewTitle.textContent = detail.title;
+        if (previewCategory) previewCategory.textContent = detail.category;
+        if (previewVisibility) previewVisibility.textContent = detail.isPublic ? ${JSON.stringify(copy.detailPublic)} : ${JSON.stringify(copy.detailPrivate)};
+        if (previewDate) previewDate.textContent = detail.createdAt.slice(0, 10);
+        if (previewCount) previewCount.textContent = (detail.images.length || 1) + ' ' + ${JSON.stringify(entryCountLabel)};
+        if (previewTags instanceof HTMLElement) {
+          previewTags.replaceChildren();
+          (detail.tags || []).forEach((tag) => {
+            const chip = document.createElement('span');
+            chip.className = 'chip';
+            chip.textContent = tag;
+            previewTags.appendChild(chip);
+          });
+        }
+        if (previewPrompt) previewPrompt.textContent = detail.prompt;
+        if (previewNote) previewNote.textContent = detail.note?.trim() || ${JSON.stringify(copy.noNote)};
+      }
+
+      function setPreviewEmpty() {
+        selectedEntryId = '';
+        selectedEntryDetail = null;
+        if (previewMainImage instanceof HTMLImageElement) {
+          previewMainImage.removeAttribute('src');
+          previewMainImage.alt = '';
+          previewMainImage.hidden = true;
+        }
+        if (previewDownload instanceof HTMLAnchorElement) {
+          previewDownload.removeAttribute('href');
+        }
+        if (previewTitle) previewTitle.textContent = ${JSON.stringify(emptyPreviewLabel)};
+        if (previewCategory) previewCategory.textContent = '-';
+        if (previewVisibility) previewVisibility.textContent = '-';
+        if (previewDate) previewDate.textContent = '-';
+        if (previewCount) previewCount.textContent = '-';
+        if (previewTags instanceof HTMLElement) previewTags.replaceChildren();
+        if (previewPrompt) previewPrompt.textContent = ${JSON.stringify(emptyPreviewLabel)};
+        if (previewNote) previewNote.textContent = ${JSON.stringify(emptyPreviewLabel)};
+      }
+
+      function focusEditor() {
+        document.querySelector('.admin-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+
       function entryItem(entry) {
         const wrapper = document.createElement('article');
         wrapper.className = 'admin-item';
         wrapper.innerHTML = \`
-          <a class="admin-item-main" href="/admin/entry/\${encodeURIComponent(entry.id)}">
+          <a class="admin-item-main" href="/admin/entry/\${encodeURIComponent(entry.id)}" data-preview-link>
             <img src="\${entry.coverImageUrl}" alt="" />
             <div>
               <h3>\${entry.title}</h3>
@@ -1358,6 +1468,10 @@ function renderAdminPage(request: Request, lang: Lang, theme: Theme, categories:
             <button class="button danger" type="button" data-delete>\${entryDeleteLabel}</button>
           </div>
         \`;
+        wrapper.querySelector('[data-preview-link]')?.addEventListener('click', async (event) => {
+          event.preventDefault();
+          await loadEntryForPreview(entry.id);
+        });
         wrapper.querySelector('[data-edit]')?.addEventListener('click', async () => {
           await loadEntryForEdit(entry.id);
         });
@@ -1367,6 +1481,9 @@ function renderAdminPage(request: Request, lang: Lang, theme: Theme, categories:
           if (!response.ok) {
             status.textContent = ${JSON.stringify(copy.deleteFailed)};
             return;
+          }
+          if (selectedEntryId === entry.id) {
+            setPreviewEmpty();
           }
           status.textContent = ${JSON.stringify(copy.deleted)};
           await loadEntries();
@@ -1384,15 +1501,29 @@ function renderAdminPage(request: Request, lang: Lang, theme: Theme, categories:
         entriesList.innerHTML = '';
         if (!payload.entries.length) {
           entriesList.innerHTML = '<div class="helper">${emptyEntriesLabel}</div>';
+          setPreviewEmpty();
           return;
         }
         payload.entries.forEach((entry) => entriesList.appendChild(entryItem(entry)));
+        if (!selectedEntryId) {
+          await loadEntryForPreview(payload.entries[0].id);
+        } else if (!payload.entries.some((entry) => entry.id === selectedEntryId)) {
+          await loadEntryForPreview(payload.entries[0].id);
+        }
+      }
+
+      async function loadEntryForPreview(entryId) {
+        const response = await fetch('/api/entries/' + encodeURIComponent(entryId) + '?admin=1');
+        if (!response.ok) return;
+        const detail = await response.json();
+        setPreview(detail);
       }
 
       async function loadEntryForEdit(entryId) {
         const response = await fetch('/api/entries/' + encodeURIComponent(entryId) + '?admin=1');
         if (!response.ok) return;
         const detail = await response.json();
+        setPreview(detail);
         entryIdField.value = detail.id;
         titleField.value = detail.title;
         categoryField.value = detail.category;
@@ -1402,12 +1533,14 @@ function renderAdminPage(request: Request, lang: Lang, theme: Theme, categories:
         publicField.checked = Boolean(detail.isPublic);
         submitButton.textContent = ${JSON.stringify(copy.saveChanges)};
         status.textContent = ${JSON.stringify(copy.editing)} + ' ' + detail.title;
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        focusEditor();
       }
 
       const editId = new URLSearchParams(window.location.search).get('edit');
       if (editId) {
         loadEntryForEdit(editId);
+      } else {
+        setPreviewEmpty();
       }
 
       form.addEventListener('submit', async (event) => {
@@ -1439,6 +1572,19 @@ function renderAdminPage(request: Request, lang: Lang, theme: Theme, categories:
 
       resetButton.addEventListener('click', clearForm);
       refreshListButton.addEventListener('click', loadEntries);
+      previewEdit?.addEventListener('click', async () => {
+        if (!selectedEntryId) return;
+        await loadEntryForEdit(selectedEntryId);
+      });
+      previewCopy?.addEventListener('click', async () => {
+        if (!selectedEntryDetail) return;
+        await navigator.clipboard.writeText(selectedEntryDetail.prompt || '');
+      });
+      previewOpen?.addEventListener('click', () => {
+        if (!selectedEntryDetail) return;
+        const url = selectedEntryDetail.coverImageUrl;
+        window.open(url, '_blank', 'noopener');
+      });
       loadEntries();
     `,
   });
