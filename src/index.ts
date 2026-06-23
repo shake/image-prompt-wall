@@ -523,7 +523,7 @@ function renderPage(options: {
       html:lang(zh) body { font-size: 14.5px; }
       html:lang(zh) .brand h1 { font-size: clamp(24px, 2.55vw, 38px); }
       html:lang(zh) .panel h1 { font-size: clamp(32px, 3.6vw, 52px); line-height: 1.08; letter-spacing: -0.03em; }
-      html:lang(zh) .admin-panel h1 { font-size: clamp(24px, 2.3vw, 32px); line-height: 1.1; letter-spacing: -0.03em; }
+      html:lang(zh) .admin-panel h1 { font-size: clamp(21px, 1.9vw, 28px); line-height: 1.12; letter-spacing: -0.03em; }
       html:lang(zh) .pill,
       html:lang(zh) .button,
       html:lang(zh) .lang-select,
@@ -789,6 +789,17 @@ function renderPage(options: {
         line-height: 1.6;
         white-space: pre-wrap;
       }
+      .admin-detail-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin: 14px 0 0;
+      }
+      .admin-detail-actions .button {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
       .modal {
         position: fixed;
         inset: 0;
@@ -840,7 +851,7 @@ function renderPage(options: {
         background: var(--panel-strong);
         padding: 14px 16px;
       }
-      .admin-panel .textarea { min-height: 160px; resize: vertical; }
+      .admin-panel .textarea { min-height: 140px; resize: vertical; }
       .admin-panel .row { display: grid; gap: 14px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .admin-panel .row.one { grid-template-columns: 1fr; }
       .admin-panel .helper { color: var(--muted); font-size: 13px; line-height: 1.5; }
@@ -1162,7 +1173,6 @@ function renderDetailPage(request: Request, lang: Lang, theme: Theme, entry: Ent
             <div class="viewer-actions">
               <button class="icon-action buttonless" type="button" data-open-original aria-label="${htmlEscape(copy.viewOriginal)}">${iconOpen()}</button>
               <a class="icon-action" href="${htmlEscape(visibleImages[0]?.url || entry.coverImageUrl)}" download aria-label="${htmlEscape(copy.download)}">${iconDownload()}</a>
-              ${adminMode ? `<button class="icon-action" type="button" data-admin-edit aria-label="${htmlEscape(copy.edit)}">${iconEdit()}</button>` : ""}
             </div>
             <div class="image-caption">
               <div class="image-title">${htmlEscape(entry.title)}</div>
@@ -1177,6 +1187,7 @@ function renderDetailPage(request: Request, lang: Lang, theme: Theme, entry: Ent
               </div>
               ${metaTags ? `<div class="image-tags">${metaTags}</div>` : ""}
             </div>
+            ${adminMode ? `<div class="admin-detail-actions"><a class="button secondary" href="/admin">${htmlEscape(lang === "zh" ? "返回后台" : "Back to admin")}</a><button class="button" type="button" data-admin-edit>${iconEdit()}<span>${htmlEscape(copy.edit)}</span></button></div>` : ""}
           </article>
           <aside class="panel">
             <div class="section">
