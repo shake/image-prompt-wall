@@ -78,6 +78,7 @@ const COPY: Record<Lang, {
   clear: string;
   copyPrompt: string;
   download: string;
+  close: string;
   created: string;
   deleteConfirm: string;
   deleteFailed: string;
@@ -137,6 +138,7 @@ const COPY: Record<Lang, {
     clear: "Clear",
     copyPrompt: "Copy prompt",
     download: "Download",
+    close: "Close",
     created: "Created",
     deleteConfirm: "Delete this prompt and all linked images?",
     deleteFailed: "Delete failed.",
@@ -196,6 +198,7 @@ const COPY: Record<Lang, {
     clear: "清空",
     copyPrompt: "复制提示词",
     download: "下载",
+    close: "关闭",
     created: "创建时间",
     deleteConfirm: "确定删除这条提示词和所有关联图片吗？",
     deleteFailed: "删除失败。",
@@ -370,6 +373,26 @@ function iconPaper(): string {
   return `<svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>`;
 }
 
+function iconOpen(): string {
+  return `<svg viewBox="0 0 1024 1024" aria-hidden="true" width="18" height="18" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M131.413333 85.333333h142.933334a32 32 0 1 0 0-64H54.186667a32 32 0 0 0-32 32v221.013334a32 32 0 1 0 64 0V131.413333l344.32 344.32a32 32 0 0 0 45.226666-45.226666zM969.813333 717.653333a32 32 0 0 0-32 32v142.506667l-344.32-344.32a32 32 0 0 0-45.226666 45.226667l344.32 345.6h-142.933334a32 32 0 0 0 0 64h220.16a32 32 0 0 0 32-32v-221.013334a32 32 0 0 0-32-32zM999.253333 42.666667a32 32 0 0 0-29.44-19.626667h-220.16a32 32 0 1 0 0 64h142.506667l-344.32 344.32a32 32 0 1 0 45.226667 45.226667L938.666667 131.413333v142.933334a32 32 0 1 0 64 0V54.186667a32 32 0 0 0-3.413334-11.52zM430.506667 548.266667L85.333333 892.586667v-142.933334a32 32 0 1 0-64 0v220.16a32 32 0 0 0 32 32h221.013334a32 32 0 1 0 0-64H131.413333l344.32-344.32a32 32 0 0 0-45.226666-45.226666z"/></svg>`;
+}
+
+function iconDownload(): string {
+  return `<svg viewBox="0 0 1024 1024" aria-hidden="true" width="18" height="18" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M843.001 820.769c-0.024 0-0.050 0-0.050 0h-658.793c-14.14 0-25.599 11.459-25.599 25.624 0 14.14 11.484 25.6 25.599 25.6h658.793c0 0 0.024 0 0.050 0 14.14 0 25.6-11.459 25.6-25.6 0-14.166-11.459-25.624-25.6-25.624zM494.381 766.031c4.78 4.806 11.358 7.817 18.668 7.817v0 0c7.309 0 13.886-2.986 18.617-7.841l318.189-318.19c4.781-4.755 7.793-11.331 7.817-18.592 0-14.494-11.839-26.231-26.256-26.231-7.285-0.025-13.837 2.96-18.567 7.715l-273.569 273.544v-495.206c-0.026-0.025-0.026-0.025-0.026-0.050 0.026-14.494-11.71-26.257-26.18-26.257-14.494 0-26.231 11.763-26.231 26.257 0 0 0 0.025 0.025 0.050v495.182l-273.544-273.543c-4.73-4.755-11.332-7.715-18.567-7.69-14.494-0.025-26.231 11.737-26.282 26.181 0 7.285 2.986 13.913 7.766 18.618l318.14 318.241z"/></svg>`;
+}
+
+function iconCopy(): string {
+  return `<svg viewBox="0 0 1024 1024" aria-hidden="true" width="18" height="18" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M394.666667 106.666667h448a74.666667 74.666667 0 0 1 74.666666 74.666666v448a74.666667 74.666667 0 0 1-74.666666 74.666667H394.666667a74.666667 74.666667 0 0 1-74.666667-74.666667V181.333333a74.666667 74.666667 0 0 1 74.666667-74.666666z m0 64a10.666667 10.666667 0 0 0-10.666667 10.666666v448a10.666667 10.666667 0 0 0 10.666667 10.666667h448a10.666667 10.666667 0 0 0 10.666666-10.666667V181.333333a10.666667 10.666667 0 0 0-10.666666-10.666666H394.666667z m245.333333 597.333333a32 32 0 0 1 64 0v74.666667a74.666667 74.666667 0 0 1-74.666667 74.666666H181.333333a74.666667 74.666667 0 0 1-74.666666-74.666666V394.666667a74.666667 74.666667 0 0 1 74.666666-74.666667h74.666667a32 32 0 0 1 0 64h-74.666667a10.666667 10.666667 0 0 0-10.666666 10.666667v448a10.666667 10.666667 0 0 0 10.666666 10.666666h448a10.666667 10.666667 0 0 0 10.666667-10.666666v-74.666667z"/></svg>`;
+}
+
+function iconClose(): string {
+  return `<svg viewBox="0 0 1024 1024" aria-hidden="true" width="18" height="18" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M548.992 503.744L885.44 167.328a31.968 31.968 0 1 0-45.248-45.248L503.744 458.496 167.328 122.08a31.968 31.968 0 1 0-45.248 45.248l336.416 336.416L122.08 840.16a31.968 31.968 0 1 0 45.248 45.248l336.416-336.416L840.16 885.44a31.968 31.968 0 1 0 45.248-45.248L548.992 503.744z"/></svg>`;
+}
+
+function iconEdit(): string {
+  return `<svg viewBox="0 0 1024 1024" aria-hidden="true" width="18" height="18" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M707.968 144.384 879.616 316.032 320 875.648 148.352 704zM912 240.256 783.744 112a64 64 0 0 0-90.496 0l-71.68 71.68 171.648 171.648 119.296-119.296a64 64 0 0 0 0-90.176zM128 896h768a32 32 0 1 0 0-64H128a32 32 0 1 0 0 64z"/></svg>`;
+}
+
 function themeIcon(theme: Theme): string {
   if (theme === "paper") return iconPaper();
   if (theme === "warm") return iconSun();
@@ -497,15 +520,15 @@ function renderPage(options: {
       html[data-theme="paper"] { color-scheme: light; --bg: #f8f3e6; --panel: rgba(255, 251, 242, 0.84); --panel-strong: #fffdf8; --text: #1f1d1b; --muted: #766b5f; --line: rgba(79, 59, 32, 0.14); --shadow: 0 18px 50px rgba(72, 49, 10, 0.08); }
       html[data-theme="dark"] { color-scheme: dark; --bg: #0e1116; --panel: rgba(17, 21, 29, 0.84); --panel-strong: #141926; --text: #f1efe8; --muted: #98a2b3; --line: rgba(255, 255, 255, 0.12); --shadow: 0 24px 60px rgba(0, 0, 0, 0.38); --accent: #f0e7d7; --button-bg: #f0e7d7; --button-text: #171411; --button-secondary-bg: rgba(255, 255, 255, 0.08); --button-secondary-text: var(--text); --pill-active-bg: #f0e7d7; --pill-active-text: #171411; }
       html, body { margin: 0; padding: 0; background: radial-gradient(circle at top, color-mix(in srgb, var(--bg) 78%, white) 0, var(--bg) 54%); color: var(--text); font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-      html:lang(zh) body { font-size: 15px; }
-      html:lang(zh) .brand h1 { font-size: clamp(26px, 2.75vw, 40px); }
-      html:lang(zh) .panel h1,
-      html:lang(zh) .admin-panel h1 { font-size: clamp(32px, 3.6vw, 52px); line-height: 1.08; letter-spacing: -0.03em; }
+      html:lang(zh) body { font-size: 14.5px; }
+      html:lang(zh) .brand h1 { font-size: clamp(24px, 2.55vw, 38px); }
+      html:lang(zh) .panel h1 { font-size: clamp(32px, 3.6vw, 52px); line-height: 1.08; letter-spacing: -0.03em; }
+      html:lang(zh) .admin-panel h1 { font-size: clamp(24px, 2.3vw, 32px); line-height: 1.1; letter-spacing: -0.03em; }
       html:lang(zh) .pill,
       html:lang(zh) .button,
       html:lang(zh) .lang-select,
       html:lang(zh) .menu-item,
-      html:lang(zh) .menu-link { font-size: 0.96em; }
+      html:lang(zh) .menu-link { font-size: 0.93em; }
       html:lang(zh) .card-title { font-size: 14px; line-height: 1.22; }
       html:lang(zh) pre.prompt,
       html:lang(zh) .admin-item p,
@@ -682,6 +705,7 @@ function renderPage(options: {
         border-radius: 18px;
         background: color-mix(in srgb, var(--bg) 80%, white 20%);
         box-shadow: 0 1px 0 rgba(255,255,255,0.24), 0 18px 40px rgba(0,0,0,0.06);
+        cursor: zoom-in;
       }
       .viewer-actions {
         display: flex;
@@ -690,9 +714,22 @@ function renderPage(options: {
         justify-content: center;
         margin: 14px 0 8px;
       }
-      .viewer-actions .button {
-        padding: 11px 16px;
-        border-radius: 999px;
+      .icon-action {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        border: 1px solid var(--line);
+        background: var(--panel-strong);
+        color: var(--text);
+        text-decoration: none;
+        box-shadow: none;
+      }
+      .icon-action.buttonless {
+        padding: 0;
+        cursor: pointer;
       }
       .image-caption {
         display: grid;
@@ -721,23 +758,6 @@ function renderPage(options: {
         opacity: 0.3;
       }
       .image-tags { display: flex; flex-wrap: wrap; gap: 8px; }
-      .thumbs {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-        margin-top: 12px;
-      }
-      .thumb {
-        width: 74px;
-        height: 74px;
-        padding: 0;
-        border: 1px solid var(--line);
-        border-radius: 14px;
-        overflow: hidden;
-        background: var(--panel-strong);
-        cursor: pointer;
-      }
-      .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
       .panel, .admin-panel, .admin-list { padding: 20px; }
       .panel { max-width: 100%; }
       .eyebrow { color: #6b5fbe; font-weight: 700; font-size: 14px; margin-bottom: 8px; }
@@ -757,6 +777,7 @@ function renderPage(options: {
         overflow: auto;
       }
       .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+      .actions.icon-row { justify-content: flex-start; }
       .chips { display: flex; flex-wrap: wrap; gap: 10px; }
       .chip { display: inline-flex; align-items: center; padding: 8px 12px; border-radius: 999px; background: var(--panel-strong); border: 1px solid var(--line); font-size: 14px; font-weight: 600; color: var(--text); text-decoration: none; }
       .remark {
@@ -767,6 +788,47 @@ function renderPage(options: {
         color: var(--text);
         line-height: 1.6;
         white-space: pre-wrap;
+      }
+      .modal {
+        position: fixed;
+        inset: 0;
+        z-index: 50;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        background: rgba(0, 0, 0, 0.72);
+        backdrop-filter: blur(10px);
+      }
+      .modal[hidden] { display: none; }
+      .modal-card {
+        position: relative;
+        width: min(92vw, 1280px);
+        max-height: 92vh;
+        display: grid;
+        place-items: center;
+      }
+      .modal-image {
+        max-width: 100%;
+        max-height: 92vh;
+        object-fit: contain;
+        border-radius: 18px;
+        box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+        background: #111;
+      }
+      .modal-close {
+        position: absolute;
+        top: -12px;
+        right: -12px;
+        width: 44px;
+        height: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        border: 1px solid rgba(255,255,255,0.18);
+        background: rgba(10, 10, 10, 0.82);
+        color: #fff;
+        cursor: pointer;
       }
       .admin-layout { display: grid; grid-template-columns: minmax(0, 0.88fr) minmax(360px, 1.12fr); gap: 24px; padding: 24px 0 44px; align-items: start; }
       .stack { display: grid; gap: 16px; }
@@ -786,6 +848,15 @@ function renderPage(options: {
       .note-field .textarea { min-height: 120px; }
       .admin-list { display: grid; gap: 12px; }
       .admin-item { display: grid; grid-template-columns: 84px 1fr auto; gap: 14px; padding: 14px; border-radius: 18px; border: 1px solid var(--line); background: color-mix(in srgb, var(--panel-strong) 80%, var(--bg) 20%); align-items: center; }
+      .admin-item-main {
+        display: grid;
+        grid-template-columns: 84px 1fr;
+        gap: 14px;
+        align-items: center;
+        min-width: 0;
+        color: inherit;
+        text-decoration: none;
+      }
       .admin-item img { width: 84px; height: 84px; object-fit: cover; border-radius: 14px; background: color-mix(in srgb, var(--bg) 84%, white 16%); }
       html[data-theme="dark"] .admin-item img { background: rgba(255, 255, 255, 0.08); }
       .admin-item h3 { margin: 0 0 6px; font-size: 18px; line-height: 1.1; }
@@ -1063,22 +1134,12 @@ function renderHomePage(request: Request, lang: Lang, theme: Theme, entries: Ent
   });
 }
 
-function renderDetailPage(request: Request, lang: Lang, theme: Theme, entry: EntryDetail): string {
+function renderDetailPage(request: Request, lang: Lang, theme: Theme, entry: EntryDetail, adminMode = false): string {
   const copy = ui(lang);
   const visibleImages = [
     { id: `${entry.id}-cover`, url: entry.coverImageUrl, sortOrder: 0 },
     ...entry.images.filter((image) => image.url !== entry.coverImageUrl),
   ];
-
-  const thumbnails = visibleImages
-    .map(
-      (image, index) => `
-        <button class="thumb" type="button" data-image-url="${htmlEscape(image.url)}" aria-label="Show variation ${index + 1}">
-          <img src="${htmlEscape(image.url)}" alt="${attrEscape(entry.title)} variation ${index + 1}" loading="lazy" />
-        </button>
-      `,
-    )
-    .join("");
 
   const tags = entry.tags
     .map((tag) => `<span class="chip">${htmlEscape(tag)}</span>`)
@@ -1099,8 +1160,9 @@ function renderDetailPage(request: Request, lang: Lang, theme: Theme, entry: Ent
           <article class="viewer">
             <img id="mainImage" class="main-image" src="${htmlEscape(visibleImages[0]?.url || entry.coverImageUrl)}" alt="${attrEscape(entry.title)}" />
             <div class="viewer-actions">
-              <a class="button secondary" href="${htmlEscape(visibleImages[0]?.url || entry.coverImageUrl)}" target="_blank" rel="noreferrer">${htmlEscape(copy.viewOriginal)}</a>
-              <a class="button secondary" href="${htmlEscape(visibleImages[0]?.url || entry.coverImageUrl)}" download>${htmlEscape(copy.download)}</a>
+              <button class="icon-action buttonless" type="button" data-open-original aria-label="${htmlEscape(copy.viewOriginal)}">${iconOpen()}</button>
+              <a class="icon-action" href="${htmlEscape(visibleImages[0]?.url || entry.coverImageUrl)}" download aria-label="${htmlEscape(copy.download)}">${iconDownload()}</a>
+              ${adminMode ? `<button class="icon-action" type="button" data-admin-edit aria-label="${htmlEscape(copy.edit)}">${iconEdit()}</button>` : ""}
             </div>
             <div class="image-caption">
               <div class="image-title">${htmlEscape(entry.title)}</div>
@@ -1115,13 +1177,12 @@ function renderDetailPage(request: Request, lang: Lang, theme: Theme, entry: Ent
               </div>
               ${metaTags ? `<div class="image-tags">${metaTags}</div>` : ""}
             </div>
-            <div class="thumbs">${thumbnails}</div>
           </article>
           <aside class="panel">
             <div class="section">
-              <h2>${htmlEscape(copy.prompt)}</h2>
-              <div class="actions" style="margin-top:0;">
-                <button class="button secondary" type="button" data-copy-prompt>${htmlEscape(copy.copyPrompt)}</button>
+              <div class="actions icon-row" style="margin-top:0; justify-content: space-between; align-items: center;">
+                <h2 style="margin:0;">${htmlEscape(copy.prompt)}</h2>
+                <button class="icon-action" type="button" data-copy-prompt aria-label="${htmlEscape(copy.copyPrompt)}">${iconCopy()}</button>
               </div>
               <pre class="prompt" id="promptText">${htmlEscape(entry.prompt)}</pre>
             </div>
@@ -1132,14 +1193,43 @@ function renderDetailPage(request: Request, lang: Lang, theme: Theme, entry: Ent
           </aside>
         </section>
       </main>
+      <div class="modal" data-image-modal hidden>
+        <div class="modal-card" role="dialog" aria-modal="true" aria-label="${htmlEscape(copy.viewOriginal)}">
+          <button class="modal-close" type="button" data-close-modal aria-label="${htmlEscape(copy.close)}">${iconClose()}</button>
+          <img class="modal-image" data-modal-image src="${htmlEscape(visibleImages[0]?.url || entry.coverImageUrl)}" alt="${attrEscape(entry.title)}" />
+        </div>
+      </div>
     `,
     script: `
       const mainImage = document.getElementById('mainImage');
-      document.querySelectorAll('[data-image-url]').forEach((button) => {
-        button.addEventListener('click', () => {
-          const url = button.getAttribute('data-image-url');
-          if (url && mainImage) mainImage.src = url;
-        });
+      const modal = document.querySelector('[data-image-modal]');
+      const modalImage = document.querySelector('[data-modal-image]');
+      const openOriginalButton = document.querySelector('[data-open-original]');
+      const closeModalButton = document.querySelector('[data-close-modal]');
+      const adminEditButton = document.querySelector('[data-admin-edit]');
+      const adminEditUrl = ${adminMode ? JSON.stringify(`/admin?edit=${encodeURIComponent(entry.id)}`) : 'null'};
+
+      const openModal = () => {
+        if (!modal || !modalImage || !mainImage) return;
+        modalImage.src = mainImage.src;
+        modal.hidden = false;
+      };
+
+      const closeModal = () => {
+        if (!modal) return;
+        modal.hidden = true;
+      };
+
+      openOriginalButton?.addEventListener('click', openModal);
+      adminEditButton?.addEventListener('click', () => {
+        if (adminEditUrl) window.location.href = adminEditUrl;
+      });
+      closeModalButton?.addEventListener('click', closeModal);
+      modal?.addEventListener('click', (event) => {
+        if (event.target === modal) closeModal();
+      });
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') closeModal();
       });
       const promptText = document.getElementById('promptText');
       document.querySelector('[data-copy-prompt]')?.addEventListener('click', async () => {
@@ -1245,30 +1335,20 @@ function renderAdminPage(request: Request, lang: Lang, theme: Theme, categories:
         const wrapper = document.createElement('article');
         wrapper.className = 'admin-item';
         wrapper.innerHTML = \`
-          <img src="\${entry.coverImageUrl}" alt="" />
-          <div>
-            <h3>\${entry.title}</h3>
-            <p>\${entry.category} · \${(entry.tags || []).join(', ') || ${JSON.stringify(copy.noTags)}} · \${entry.imageCount} ${JSON.stringify(entryCountLabel)}</p>
-          </div>
+          <a class="admin-item-main" href="/admin/entry/\${encodeURIComponent(entry.id)}">
+            <img src="\${entry.coverImageUrl}" alt="" />
+            <div>
+              <h3>\${entry.title}</h3>
+              <p>\${entry.category} · \${(entry.tags || []).join(', ') || ${JSON.stringify(copy.noTags)}} · \${entry.imageCount} ${JSON.stringify(entryCountLabel)}</p>
+            </div>
+          </a>
           <div class="controls">
             <button class="button secondary" type="button" data-edit>${JSON.stringify(copy.edit)}</button>
             <button class="button danger" type="button" data-delete>\${entryDeleteLabel}</button>
           </div>
         \`;
         wrapper.querySelector('[data-edit]')?.addEventListener('click', async () => {
-          const response = await fetch('/api/entries/' + encodeURIComponent(entry.id) + '?admin=1');
-          if (!response.ok) return;
-          const detail = await response.json();
-          entryIdField.value = detail.id;
-          titleField.value = detail.title;
-          categoryField.value = detail.category;
-          tagsField.value = (detail.tags || []).join(', ');
-          promptField.value = detail.prompt;
-          noteField.value = detail.note || '';
-          publicField.checked = Boolean(detail.isPublic);
-          submitButton.textContent = ${JSON.stringify(copy.saveChanges)};
-          status.textContent = ${JSON.stringify(copy.editing)} + ' ' + detail.title;
-          window.scrollTo({ top: 0, behavior: 'smooth' });
+          await loadEntryForEdit(entry.id);
         });
         wrapper.querySelector('[data-delete]')?.addEventListener('click', async () => {
           if (!confirm(${JSON.stringify(copy.deleteConfirm)})) return;
@@ -1296,6 +1376,27 @@ function renderAdminPage(request: Request, lang: Lang, theme: Theme, categories:
           return;
         }
         payload.entries.forEach((entry) => entriesList.appendChild(entryItem(entry)));
+      }
+
+      async function loadEntryForEdit(entryId) {
+        const response = await fetch('/api/entries/' + encodeURIComponent(entryId) + '?admin=1');
+        if (!response.ok) return;
+        const detail = await response.json();
+        entryIdField.value = detail.id;
+        titleField.value = detail.title;
+        categoryField.value = detail.category;
+        tagsField.value = (detail.tags || []).join(', ');
+        promptField.value = detail.prompt;
+        noteField.value = detail.note || '';
+        publicField.checked = Boolean(detail.isPublic);
+        submitButton.textContent = ${JSON.stringify(copy.saveChanges)};
+        status.textContent = ${JSON.stringify(copy.editing)} + ' ' + detail.title;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
+      const editId = new URLSearchParams(window.location.search).get('edit');
+      if (editId) {
+        loadEntryForEdit(editId);
       }
 
       form.addEventListener('submit', async (event) => {
@@ -1551,6 +1652,15 @@ export default {
           getCategories(env),
         ]);
         return new Response(renderHomePage(request, lang, theme, entries, categories, q, category), {
+          headers: { "content-type": "text/html; charset=utf-8" },
+        });
+      }
+
+      if (pathname.startsWith("/admin/entry/")) {
+        const id = decodeURIComponent(pathname.slice("/admin/entry/".length));
+        const entry = await loadEntryDetail(env, request, id, true);
+        if (!entry) return new Response("Not found", { status: 404 });
+        return new Response(renderDetailPage(request, lang, theme, entry, true), {
           headers: { "content-type": "text/html; charset=utf-8" },
         });
       }
