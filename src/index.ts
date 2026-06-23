@@ -2,6 +2,13 @@
 
 const SITE_TITLE = "Image Prompt Wall";
 const SITE_SUBTITLE = "Prompts worth keeping. Images worth revisiting.";
+const SITE_SUBTITLE_ZH = "值得保留的提示词。值得回看的图片。";
+const GITHUB_URL = "https://github.com/shake/image-prompt-wall";
+const THEME_COOKIE = "ipw_theme";
+const LANG_COOKIE = "ipw_lang";
+const THEME_OPTIONS = ["paper", "warm", "dark"] as const;
+type Theme = (typeof THEME_OPTIONS)[number];
+type Lang = "en" | "zh";
 const DEFAULT_CATEGORIES = [
   "Infographic",
   "Poster",
@@ -57,6 +64,176 @@ type AdminEntrySummary = EntryListItem & {
   imageCount: number;
 };
 
+const COPY: Record<Lang, {
+  all: string;
+  allCategories: string;
+  admin: string;
+  addPrompt: string;
+  allowPublic: string;
+  appTitle: string;
+  backToExplore: string;
+  category: string;
+  clear: string;
+  copyPrompt: string;
+  copyTitle: string;
+  created: string;
+  deleteConfirm: string;
+  deleteFailed: string;
+  deleted: string;
+  detailPublic: string;
+  detailPrivate: string;
+  edit: string;
+  editing: string;
+  delete: string;
+  emptyState: string;
+  explore: string;
+  github: string;
+  imageCount: (count: number) => string;
+  images: string;
+  info: string;
+  language: string;
+  loadFailed: string;
+  logout: string;
+  menu: string;
+  noTags: string;
+  noPromptsYet: string;
+  paperTheme: string;
+  prompt: string;
+  prompts: string;
+  publish: string;
+  publishing: string;
+  refreshList: string;
+  reset: string;
+  saveChanges: string;
+  saved: string;
+  search: string;
+  searchPlaceholder: string;
+  selectCategory: string;
+  selectTheme: string;
+  subtitle: string;
+  tags: string;
+  theme: string;
+  title: string;
+  updated: string;
+  warmTheme: string;
+  darkTheme: string;
+  viewOriginal: string;
+  viewOnGitHub: string;
+}> = {
+  en: {
+    all: "All",
+    allCategories: "All categories",
+    admin: "Admin",
+    addPrompt: "Add prompt",
+    allowPublic: "Public",
+    appTitle: SITE_TITLE,
+    backToExplore: "Explore",
+    category: "Category",
+    clear: "Clear",
+    copyPrompt: "Copy prompt",
+    copyTitle: "Copy title",
+    created: "Created",
+    deleteConfirm: "Delete this prompt and all linked images?",
+    deleteFailed: "Delete failed.",
+    deleted: "Deleted.",
+    detailPublic: "Public",
+    detailPrivate: "Private",
+    edit: "Edit",
+    editing: "Editing",
+    delete: "Delete",
+    emptyState: "No prompts yet. Add your first image and prompt to start building the wall.",
+    explore: "Explore",
+    github: "GitHub",
+    imageCount: (count) => `${count} image${count === 1 ? "" : "s"}`,
+    images: "Images",
+    info: "Info",
+    language: "Language",
+    loadFailed: "Unable to load entries.",
+    logout: "Logout",
+    menu: "Menu",
+    noTags: "No tags yet.",
+    noPromptsYet: "No prompts yet.",
+    paperTheme: "Light",
+    prompt: "Prompt",
+    prompts: "prompts",
+    publish: "Publish",
+    publishing: "Publishing",
+    refreshList: "Refresh list",
+    reset: "Reset",
+    saveChanges: "Save changes",
+    saved: "Saved",
+    search: "Search",
+    searchPlaceholder: "Search prompts, titles, tags...",
+    selectCategory: "Select category",
+    selectTheme: "Select theme",
+    subtitle: SITE_SUBTITLE,
+    tags: "Tags",
+    theme: "Theme switch",
+    title: "Title",
+    updated: "Updated",
+    warmTheme: "Warm",
+    darkTheme: "Dark",
+    viewOriginal: "View original",
+    viewOnGitHub: "View on GitHub",
+  },
+  zh: {
+    all: "全部",
+    allCategories: "全部分类",
+    admin: "后台",
+    addPrompt: "新增提示词",
+    allowPublic: "公开",
+    appTitle: SITE_TITLE,
+    backToExplore: "浏览",
+    category: "分类",
+    clear: "清空",
+    copyPrompt: "复制提示词",
+    copyTitle: "复制标题",
+    created: "创建时间",
+    deleteConfirm: "确定删除这条提示词和所有关联图片吗？",
+    deleteFailed: "删除失败。",
+    deleted: "已删除。",
+    detailPublic: "公开",
+    detailPrivate: "私密",
+    edit: "编辑",
+    editing: "正在编辑",
+    delete: "删除",
+    emptyState: "还没有内容。先上传第一张图片和提示词，开始搭建这面墙。",
+    explore: "浏览",
+    github: "GitHub",
+    imageCount: (count) => `${count} 张图`,
+    images: "图片",
+    info: "说明",
+    language: "语言",
+    loadFailed: "无法加载条目。",
+    logout: "退出",
+    menu: "菜单",
+    noTags: "暂无标签。",
+    noPromptsYet: "还没有提示词。",
+    paperTheme: "浅色",
+    prompt: "提示词",
+    prompts: "条",
+    publish: "发布",
+    publishing: "正在保存",
+    refreshList: "刷新列表",
+    reset: "重置",
+    saveChanges: "保存修改",
+    saved: "已保存",
+    search: "搜索",
+    searchPlaceholder: "搜索提示词、标题、标签…",
+    selectCategory: "选择分类",
+    selectTheme: "选择主题",
+    subtitle: SITE_SUBTITLE_ZH,
+    tags: "标签",
+    theme: "主题切换",
+    title: "标题",
+    updated: "更新时间",
+    warmTheme: "暖色",
+    darkTheme: "深色",
+    viewOriginal: "查看原图",
+    viewOnGitHub: "查看 GitHub 项目",
+  },
+};
+
 function htmlEscape(value: string): string {
   return value
     .replaceAll("&", "&amp;")
@@ -102,21 +279,188 @@ function tagsToText(tags: string[]): string {
   return tags.join(", ");
 }
 
+function getCookie(request: Request, name: string): string | null {
+  const cookie = request.headers.get("Cookie");
+  if (!cookie) return null;
+  const parts = cookie.split(/;\s*/);
+  for (const part of parts) {
+    const index = part.indexOf("=");
+    if (index === -1) continue;
+    const key = part.slice(0, index).trim();
+    if (key === name) return decodeURIComponent(part.slice(index + 1));
+  }
+  return null;
+}
+
+function getLang(request: Request): Lang {
+  const cookie = getCookie(request, LANG_COOKIE);
+  if (cookie === "zh" || cookie === "en") return cookie;
+  const acceptLanguage = request.headers.get("accept-language") || "";
+  return /(^|,|\s)zh/i.test(acceptLanguage) ? "zh" : "en";
+}
+
+function getTheme(request: Request): Theme {
+  const cookie = getCookie(request, THEME_COOKIE);
+  if (cookie === "paper" || cookie === "warm" || cookie === "dark") return cookie;
+  return "warm";
+}
+
+function setCookieHeader(name: string, value: string): string {
+  return `${name}=${encodeURIComponent(value)}; Path=/; Max-Age=31536000; SameSite=Lax`;
+}
+
+function ui(lang: Lang) {
+  return COPY[lang];
+}
+
+function themeLabel(lang: Lang, theme: Theme): string {
+  const copy = ui(lang);
+  if (theme === "paper") return copy.paperTheme;
+  if (theme === "warm") return copy.warmTheme;
+  return copy.darkTheme;
+}
+
+function categoryLabel(lang: Lang, category: string): string {
+  const map: Record<string, { en: string; zh: string }> = {
+    Infographic: { en: "Infographic", zh: "信息图" },
+    Poster: { en: "Poster", zh: "海报" },
+    Photography: { en: "Photography", zh: "摄影" },
+    UI: { en: "UI", zh: "界面" },
+    Illustration: { en: "Illustration", zh: "插画" },
+    Typography: { en: "Typography", zh: "字体排版" },
+  };
+  const value = map[category];
+  if (!value) return category;
+  return value[lang];
+}
+
+function formatCount(lang: Lang, count: number): string {
+  if (lang === "zh") return `${count}${ui(lang).prompts}`;
+  return `${count} ${ui(lang).prompts}`;
+}
+
+function iconGithub(): string {
+  return `<svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18" fill="currentColor"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.8-.25.8-.56v-2.02c-3.28.72-3.97-1.4-3.97-1.4-.54-1.38-1.32-1.75-1.32-1.75-1.08-.74.08-.73.08-.73 1.2.08 1.83 1.24 1.83 1.24 1.06 1.82 2.78 1.29 3.46.98.1-.78.42-1.29.77-1.59-2.62-.3-5.38-1.31-5.38-5.83 0-1.29.46-2.35 1.23-3.18-.12-.3-.53-1.5.11-3.12 0 0 1-.32 3.3 1.22a11.4 11.4 0 0 1 6 0C18.5 5.8 19.5 6.12 19.5 6.12c.64 1.62.24 2.82.12 3.12.77.83 1.22 1.89 1.22 3.18 0 4.53-2.76 5.52-5.39 5.82.43.37.82 1.11.82 2.24v3.32c0 .31.21.66.8.55A11.5 11.5 0 0 0 12 .5Z"/></svg>`;
+}
+
+function iconDots(): string {
+  return `<svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18" fill="currentColor"><path d="M5 10.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Zm7-0.0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Zm7 0.0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Z"/></svg>`;
+}
+
+function iconSun(): string {
+  return `<svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>`;
+}
+
+function iconMoon(): string {
+  return `<svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>`;
+}
+
+function iconPaper(): string {
+  return `<svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>`;
+}
+
+function themeIcon(theme: Theme): string {
+  if (theme === "paper") return iconPaper();
+  if (theme === "warm") return iconSun();
+  return iconMoon();
+}
+
 function makePublicImageUrl(request: Request, imageKey: string): string {
   return new URL(`/media/${encodeURIComponent(imageKey)}`, request.url).toString();
 }
 
+function buildSharedScript(): string {
+  return `(() => {
+    const themeKey = ${JSON.stringify(THEME_COOKIE)};
+    const langKey = ${JSON.stringify(LANG_COOKIE)};
+    const themeButtons = Array.from(document.querySelectorAll('[data-theme-value]'));
+    const menuToggle = document.querySelector('[data-menu-toggle]');
+    const menuPopover = document.querySelector('[data-menu-popover]');
+    const langSelect = document.querySelector('[data-lang-select]');
+
+    const setCookie = (name, value) => {
+      document.cookie = name + '=' + encodeURIComponent(value) + '; Path=/; Max-Age=31536000; SameSite=Lax';
+    };
+
+    const setTheme = (theme) => {
+      document.documentElement.dataset.theme = theme;
+      setCookie(themeKey, theme);
+      try { localStorage.setItem(themeKey, theme); } catch {}
+      themeButtons.forEach((button) => {
+        const active = button.dataset.themeValue === theme;
+        button.classList.toggle('active', active);
+        button.setAttribute('aria-pressed', active ? 'true' : 'false');
+      });
+    };
+
+    const initialTheme = document.documentElement.dataset.theme || localStorage.getItem(themeKey) || 'warm';
+    setTheme(initialTheme);
+
+    const closeMenu = () => {
+      if (!menuPopover || !menuToggle) return;
+      menuPopover.hidden = true;
+      menuToggle.setAttribute('aria-expanded', 'false');
+    };
+
+    const openMenu = () => {
+      if (!menuPopover || !menuToggle) return;
+      menuPopover.hidden = false;
+      menuToggle.setAttribute('aria-expanded', 'true');
+    };
+
+    menuToggle?.addEventListener('click', (event) => {
+      event.preventDefault();
+      if (!menuPopover) return;
+      menuPopover.hidden ? openMenu() : closeMenu();
+    });
+
+    document.addEventListener('click', (event) => {
+      if (!menuPopover || !menuToggle) return;
+      const target = event.target;
+      if (!(target instanceof Node)) return;
+      if (!menuPopover.contains(target) && !menuToggle.contains(target)) closeMenu();
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') closeMenu();
+    });
+
+    themeButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        const theme = button.dataset.themeValue;
+        if (theme) setTheme(theme);
+      });
+    });
+
+    langSelect?.addEventListener('change', () => {
+      const value = langSelect.value;
+      setCookie(langKey, value);
+      try { localStorage.setItem(langKey, value); } catch {}
+      window.location.reload();
+    });
+
+    const storedLang = localStorage.getItem(langKey);
+    if (storedLang && langSelect && langSelect.value !== storedLang) {
+      langSelect.value = storedLang;
+    }
+  })();`;
+}
+
 function renderPage(options: {
   title: string;
+  lang: Lang;
+  theme: Theme;
   body: string;
   script?: string;
 }): string {
+  const pageDescription = options.lang === "zh" ? SITE_SUBTITLE_ZH : SITE_SUBTITLE;
   return `<!doctype html>
-<html lang="en">
+<html lang="${options.lang}" data-theme="${options.theme}">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="${htmlEscape(SITE_SUBTITLE)}" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="description" content="${htmlEscape(pageDescription)}" />
     <title>${htmlEscape(options.title)}</title>
     <style>
       :root {
@@ -130,18 +474,29 @@ function renderPage(options: {
         --shadow: 0 18px 50px rgba(44, 30, 12, 0.08);
         --radius: 22px;
         --accent: #2d261f;
+        --button-bg: #2f2922;
+        --button-text: #ffffff;
+        --button-secondary-bg: var(--panel-strong);
+        --button-secondary-text: var(--text);
+        --pill-active-bg: #2f2922;
+        --pill-active-text: #ffffff;
       }
       * { box-sizing: border-box; }
-      html, body { margin: 0; padding: 0; background: radial-gradient(circle at top, #fff8ee 0, var(--bg) 54%); color: var(--text); font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      html[data-theme="warm"] { color-scheme: light; }
+      html[data-theme="paper"] { color-scheme: light; --bg: #f8f3e6; --panel: rgba(255, 251, 242, 0.84); --panel-strong: #fffdf8; --text: #1f1d1b; --muted: #766b5f; --line: rgba(79, 59, 32, 0.14); --shadow: 0 18px 50px rgba(72, 49, 10, 0.08); }
+      html[data-theme="dark"] { color-scheme: dark; --bg: #0e1116; --panel: rgba(17, 21, 29, 0.84); --panel-strong: #141926; --text: #f1efe8; --muted: #98a2b3; --line: rgba(255, 255, 255, 0.12); --shadow: 0 24px 60px rgba(0, 0, 0, 0.38); --accent: #f0e7d7; --button-bg: #f0e7d7; --button-text: #171411; --button-secondary-bg: rgba(255, 255, 255, 0.08); --button-secondary-text: var(--text); --pill-active-bg: #f0e7d7; --pill-active-text: #171411; }
+      html, body { margin: 0; padding: 0; background: radial-gradient(circle at top, color-mix(in srgb, var(--bg) 78%, white) 0, var(--bg) 54%); color: var(--text); font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
       body { min-height: 100vh; }
       a { color: inherit; }
       .shell { width: min(1540px, calc(100vw - 32px)); margin: 0 auto; }
-      .topbar { position: sticky; top: 0; z-index: 20; backdrop-filter: blur(18px); background: rgba(245, 239, 228, 0.82); border-bottom: 1px solid var(--line); }
+      .topbar { position: sticky; top: 0; z-index: 20; backdrop-filter: blur(18px); background: color-mix(in srgb, var(--bg) 84%, white 16%); border-bottom: 1px solid var(--line); }
+      html[data-theme="dark"] .topbar { background: rgba(10, 13, 18, 0.76); }
       .topbar-inner { width: min(1540px, calc(100vw - 32px)); margin: 0 auto; display: grid; grid-template-columns: 1fr auto; gap: 16px; padding: 18px 0; align-items: center; }
       .brand { display: flex; flex-direction: column; gap: 6px; }
       .brand h1 { margin: 0; font-size: clamp(28px, 3vw, 44px); letter-spacing: -0.04em; }
       .brand p { margin: 0; color: var(--muted); font-size: 15px; }
       .toolbar { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; align-items: center; }
+      .top-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
       .field, .button, .select, .textarea, .input {
         border: 1px solid var(--line);
         background: var(--panel-strong);
@@ -153,13 +508,87 @@ function renderPage(options: {
         box-shadow: none;
       }
       .input, .select { min-width: 220px; }
-      .button { cursor: pointer; font-weight: 700; background: #2f2922; color: white; border-color: #2f2922; }
-      .button.secondary { background: white; color: var(--text); }
+      .button { cursor: pointer; font-weight: 700; background: var(--button-bg); color: var(--button-text); border-color: var(--button-bg); }
+      .button.secondary { background: var(--button-secondary-bg); color: var(--button-secondary-text); }
       .button.danger { background: #a63324; border-color: #a63324; }
       .toolbar .search { min-width: min(56vw, 620px); }
+      .icon-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 46px;
+        height: 46px;
+        border-radius: 50%;
+        border: 1px solid var(--line);
+        background: var(--panel-strong);
+        color: var(--text);
+        box-shadow: none;
+        text-decoration: none;
+      }
+      .lang-select {
+        min-width: 96px;
+        height: 46px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: var(--panel-strong);
+        color: var(--text);
+        padding: 0 12px;
+        font: inherit;
+      }
+      .menu-wrap { position: relative; }
+      .menu-popover {
+        position: absolute;
+        top: 56px;
+        right: 0;
+        width: min(290px, calc(100vw - 24px));
+        padding: 16px;
+        border-radius: 28px;
+        border: 1px solid var(--line);
+        background: var(--panel-strong);
+        box-shadow: var(--shadow);
+        z-index: 30;
+      }
+      .menu-section-title {
+        margin: 4px 6px 12px;
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+      .menu-list { display: grid; gap: 8px; }
+      .menu-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: 100%;
+        padding: 14px 16px;
+        border: 0;
+        border-radius: 18px;
+        background: transparent;
+        color: var(--text);
+        text-align: left;
+        font: inherit;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .menu-item.active { background: color-mix(in srgb, var(--bg) 72%, white); }
+      .menu-item svg, .icon-button svg { flex: 0 0 auto; }
+      .menu-divider { margin: 14px 8px; border: 0; border-top: 1px solid var(--line); }
+      .menu-link {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 16px;
+        border-radius: 18px;
+        color: var(--text);
+        text-decoration: none;
+        font-weight: 700;
+      }
+      .menu-link.logout { color: #df5b31; }
       .hero { padding: 24px 0 18px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
-      .pill { display: inline-flex; align-items: center; gap: 8px; padding: 12px 16px; border-radius: 999px; background: rgba(255,255,255,0.78); border: 1px solid var(--line); color: var(--text); text-decoration: none; font-weight: 600; box-shadow: var(--shadow); }
-      .pill.active { background: #2f2922; color: white; border-color: #2f2922; }
+      .pill { display: inline-flex; align-items: center; gap: 8px; padding: 12px 16px; border-radius: 999px; background: color-mix(in srgb, var(--panel-strong) 84%, var(--bg) 16%); border: 1px solid var(--line); color: var(--text); text-decoration: none; font-weight: 600; box-shadow: var(--shadow); }
+      .pill.active { background: var(--pill-active-bg); color: var(--pill-active-text); border-color: var(--pill-active-bg); }
       .count { margin-left: auto; color: var(--muted); font-weight: 600; }
       .cards { column-width: 280px; column-gap: 16px; padding: 14px 0 44px; }
       .card {
@@ -170,7 +599,7 @@ function renderPage(options: {
         overflow: hidden;
         position: relative;
         border-radius: 22px;
-        background: #efe8db;
+        background: color-mix(in srgb, var(--panel-strong) 76%, var(--bg) 24%);
         box-shadow: var(--shadow);
         text-decoration: none;
       }
@@ -201,7 +630,7 @@ function renderPage(options: {
       }
       .viewer, .panel, .admin-panel, .admin-list {
         border: 1px solid var(--line);
-        background: rgba(255,255,255,0.8);
+        background: color-mix(in srgb, var(--panel-strong) 80%, var(--bg) 20%);
         border-radius: var(--radius);
         box-shadow: var(--shadow);
       }
@@ -211,7 +640,7 @@ function renderPage(options: {
         width: 100%;
         height: auto;
         border-radius: 18px;
-        background: #eadfcd;
+        background: color-mix(in srgb, var(--bg) 80%, white 20%);
       }
       .thumbs {
         display: flex;
@@ -226,7 +655,7 @@ function renderPage(options: {
         border: 1px solid var(--line);
         border-radius: 14px;
         overflow: hidden;
-        background: white;
+        background: var(--panel-strong);
         cursor: pointer;
       }
       .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -241,7 +670,7 @@ function renderPage(options: {
         margin: 0;
         white-space: pre-wrap;
         word-break: break-word;
-        background: rgba(250, 247, 240, 0.95);
+        background: color-mix(in srgb, var(--panel-strong) 84%, var(--bg) 16%);
         border: 1px solid var(--line);
         border-radius: 18px;
         padding: 16px;
@@ -250,7 +679,7 @@ function renderPage(options: {
       }
       .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
       .chips { display: flex; flex-wrap: wrap; gap: 10px; }
-      .chip { display: inline-flex; align-items: center; padding: 8px 12px; border-radius: 999px; background: white; border: 1px solid var(--line); font-size: 14px; font-weight: 600; color: var(--text); text-decoration: none; }
+      .chip { display: inline-flex; align-items: center; padding: 8px 12px; border-radius: 999px; background: var(--panel-strong); border: 1px solid var(--line); font-size: 14px; font-weight: 600; color: var(--text); text-decoration: none; }
       .admin-layout { display: grid; grid-template-columns: minmax(0, 0.88fr) minmax(360px, 1.12fr); gap: 24px; padding: 24px 0 44px; align-items: start; }
       .stack { display: grid; gap: 16px; }
       .admin-panel label { display: grid; gap: 8px; font-weight: 600; font-size: 14px; color: var(--muted); }
@@ -258,7 +687,7 @@ function renderPage(options: {
         width: 100%;
         border-radius: 18px;
         border: 1px solid var(--line);
-        background: #fff;
+        background: var(--panel-strong);
         padding: 14px 16px;
       }
       .admin-panel .textarea { min-height: 160px; resize: vertical; }
@@ -266,8 +695,9 @@ function renderPage(options: {
       .admin-panel .row.one { grid-template-columns: 1fr; }
       .admin-panel .helper { color: var(--muted); font-size: 13px; line-height: 1.5; }
       .admin-list { display: grid; gap: 12px; }
-      .admin-item { display: grid; grid-template-columns: 84px 1fr auto; gap: 14px; padding: 14px; border-radius: 18px; border: 1px solid var(--line); background: rgba(255,255,255,0.75); align-items: center; }
-      .admin-item img { width: 84px; height: 84px; object-fit: cover; border-radius: 14px; background: #eae1d2; }
+      .admin-item { display: grid; grid-template-columns: 84px 1fr auto; gap: 14px; padding: 14px; border-radius: 18px; border: 1px solid var(--line); background: color-mix(in srgb, var(--panel-strong) 80%, var(--bg) 20%); align-items: center; }
+      .admin-item img { width: 84px; height: 84px; object-fit: cover; border-radius: 14px; background: color-mix(in srgb, var(--bg) 84%, white 16%); }
+      html[data-theme="dark"] .admin-item img { background: rgba(255, 255, 255, 0.08); }
       .admin-item h3 { margin: 0 0 6px; font-size: 18px; line-height: 1.1; }
       .admin-item p { margin: 0; color: var(--muted); font-size: 14px; }
       .admin-item .controls { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
@@ -276,6 +706,7 @@ function renderPage(options: {
       @media (max-width: 980px) {
         .topbar-inner, .detail, .admin-layout { grid-template-columns: 1fr; }
         .toolbar { justify-content: flex-start; }
+        .top-actions { justify-content: flex-start; }
         .toolbar .search { min-width: min(100%, 560px); }
         .count { margin-left: 0; }
       }
@@ -290,12 +721,14 @@ function renderPage(options: {
   </head>
   <body>
     ${options.body}
+    <script>${buildSharedScript()}</script>
     ${options.script ? `<script>${options.script}</script>` : ""}
   </body>
 </html>`;
 }
 
-function renderTopBar(active: "home" | "admin", title: string, subtitle: string): string {
+function renderTopBar(active: "home" | "admin", lang: Lang, theme: Theme, title: string, subtitle: string): string {
+  const copy = ui(lang);
   return `<header class="topbar">
     <div class="topbar-inner">
       <div class="brand">
@@ -303,8 +736,30 @@ function renderTopBar(active: "home" | "admin", title: string, subtitle: string)
         <p>${htmlEscape(subtitle)}</p>
       </div>
       <div class="toolbar">
-        <a class="pill ${active === "home" ? "active" : ""}" href="/">Explore</a>
-        <a class="pill ${active === "admin" ? "active" : ""}" href="/admin">Admin</a>
+        <div class="top-actions">
+          <a class="pill ${active === "home" ? "active" : ""}" href="/">${htmlEscape(copy.explore)}</a>
+          <a class="pill ${active === "admin" ? "active" : ""}" href="/admin">${htmlEscape(copy.admin)}</a>
+        </div>
+        <div class="top-actions">
+          <select class="lang-select" data-lang-select aria-label="${htmlEscape(copy.language)}">
+            <option value="en" ${lang === "en" ? "selected" : ""}>EN</option>
+            <option value="zh" ${lang === "zh" ? "selected" : ""}>中文</option>
+          </select>
+          <a class="icon-button" href="${htmlEscape(GITHUB_URL)}" target="_blank" rel="noreferrer" aria-label="${htmlEscape(copy.viewOnGitHub)}">${iconGithub()}</a>
+          <div class="menu-wrap">
+            <button class="icon-button" type="button" data-menu-toggle aria-label="${htmlEscape(copy.menu)}" aria-expanded="false">${iconDots()}</button>
+            <div class="menu-popover" data-menu-popover hidden>
+              <div class="menu-section-title">${htmlEscape(copy.theme)}</div>
+              <div class="menu-list">
+                <button class="menu-item ${theme === "paper" ? "active" : ""}" type="button" data-theme-value="paper" aria-pressed="${theme === "paper" ? "true" : "false"}">${iconPaper()}${htmlEscape(themeLabel(lang, "paper"))}</button>
+                <button class="menu-item ${theme === "warm" ? "active" : ""}" type="button" data-theme-value="warm" aria-pressed="${theme === "warm" ? "true" : "false"}">${iconSun()}${htmlEscape(themeLabel(lang, "warm"))}</button>
+                <button class="menu-item ${theme === "dark" ? "active" : ""}" type="button" data-theme-value="dark" aria-pressed="${theme === "dark" ? "true" : "false"}">${iconMoon()}${htmlEscape(themeLabel(lang, "dark"))}</button>
+              </div>
+              <hr class="menu-divider" />
+              <a class="menu-link logout" href="/cdn-cgi/access/logout">${htmlEscape(copy.logout)}</a>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </header>`;
@@ -459,7 +914,8 @@ async function loadEntryDetail(
   };
 }
 
-function renderHomePage(request: Request, entries: EntryDetail[], categories: string[], q: string, category: string): string {
+function renderHomePage(request: Request, lang: Lang, theme: Theme, entries: EntryDetail[], categories: string[], q: string, category: string): string {
+  const copy = ui(lang);
   const cards = entries.length
     ? entries
         .map(
@@ -471,13 +927,13 @@ function renderHomePage(request: Request, entries: EntryDetail[], categories: st
           `,
         )
         .join("")
-    : `<div class="empty">No prompts yet. Add your first image and prompt to start building the wall.</div>`;
+    : `<div class="empty">${htmlEscape(copy.emptyState)}</div>`;
 
   const categoryOptions = ["all", ...DEFAULT_CATEGORIES, ...categories]
     .filter((value, index, array) => array.indexOf(value) === index)
     .map(
       (value) =>
-        `<option value="${attrEscape(value)}" ${value === category ? "selected" : ""}>${htmlEscape(value === "all" ? "All categories" : value)}</option>`,
+        `<option value="${attrEscape(value)}" ${value === category ? "selected" : ""}>${htmlEscape(value === "all" ? copy.allCategories : categoryLabel(lang, value))}</option>`,
     )
     .join("");
 
@@ -485,24 +941,26 @@ function renderHomePage(request: Request, entries: EntryDetail[], categories: st
     .filter((value, index, array) => array.indexOf(value) === index)
     .map(
       (value) =>
-        `<a class="pill ${value === category ? "active" : ""}" href="/?q=${encodeURIComponent(q)}&category=${encodeURIComponent(value)}">${htmlEscape(value === "all" ? "All" : value)}</a>`,
+        `<a class="pill ${value === category ? "active" : ""}" href="/?q=${encodeURIComponent(q)}&category=${encodeURIComponent(value)}">${htmlEscape(value === "all" ? copy.all : categoryLabel(lang, value))}</a>`,
     )
     .join("");
 
   return renderPage({
     title: SITE_TITLE,
+    lang,
+    theme,
     body: `
-      ${renderTopBar("home", SITE_TITLE, SITE_SUBTITLE)}
+      ${renderTopBar("home", lang, theme, SITE_TITLE, copy.subtitle)}
       <main class="shell">
         <section class="hero">
           <form class="toolbar" method="GET" action="/">
-            <input class="field search" type="search" name="q" placeholder="Search prompts, titles, tags..." value="${attrEscape(q)}" />
+            <input class="field search" type="search" name="q" placeholder="${attrEscape(copy.searchPlaceholder)}" value="${attrEscape(q)}" />
             <select class="select" name="category">
               ${categoryOptions}
             </select>
-            <button class="button" type="submit">Search</button>
+            <button class="button" type="submit">${htmlEscape(copy.search)}</button>
           </form>
-          <div class="count">${entries.length} prompt${entries.length === 1 ? "" : "s"}</div>
+          <div class="count">${htmlEscape(formatCount(lang, entries.length))}</div>
         </section>
         <section class="hero" style="padding-top: 0;">${categoryPills}</section>
         <section class="cards">${cards}</section>
@@ -512,7 +970,8 @@ function renderHomePage(request: Request, entries: EntryDetail[], categories: st
   });
 }
 
-function renderDetailPage(request: Request, entry: EntryDetail): string {
+function renderDetailPage(request: Request, lang: Lang, theme: Theme, entry: EntryDetail): string {
+  const copy = ui(lang);
   const visibleImages = [
     { id: `${entry.id}-cover`, url: entry.coverImageUrl, sortOrder: 0 },
     ...entry.images.filter((image) => image.url !== entry.coverImageUrl),
@@ -534,8 +993,10 @@ function renderDetailPage(request: Request, entry: EntryDetail): string {
 
   return renderPage({
     title: `${entry.title} · ${SITE_TITLE}`,
+    lang,
+    theme,
     body: `
-      ${renderTopBar("home", SITE_TITLE, SITE_SUBTITLE)}
+      ${renderTopBar("home", lang, theme, SITE_TITLE, copy.subtitle)}
       <main class="shell">
         <section class="detail">
           <article class="viewer">
@@ -546,23 +1007,23 @@ function renderDetailPage(request: Request, entry: EntryDetail): string {
             <div class="eyebrow">${htmlEscape(entry.category)}</div>
             <h1>${htmlEscape(entry.title)}</h1>
             <div class="meta">
-              <span>${entry.isPublic ? "Public" : "Private"}</span>
+              <span>${htmlEscape(entry.isPublic ? copy.detailPublic : copy.detailPrivate)}</span>
               <span class="dot"></span>
               <span>${htmlEscape(entry.createdAt.slice(0, 10))}</span>
               <span class="dot"></span>
-            <span>${entry.images.length} image${entry.images.length === 1 ? "" : "s"}</span>
+              <span>${htmlEscape(copy.imageCount(entry.images.length))}</span>
             </div>
             <div class="actions">
-              <button class="button" type="button" data-copy-title>Copy title</button>
-              <button class="button secondary" type="button" data-copy-prompt>Copy prompt</button>
+              <button class="button" type="button" data-copy-title>${htmlEscape(copy.copyTitle)}</button>
+              <button class="button secondary" type="button" data-copy-prompt>${htmlEscape(copy.copyPrompt)}</button>
             </div>
             <div class="section">
-              <h2>Prompt</h2>
+              <h2>${htmlEscape(copy.prompt)}</h2>
               <pre class="prompt" id="promptText">${htmlEscape(entry.prompt)}</pre>
             </div>
             <div class="section">
-              <h2>Tags</h2>
-              <div class="chips">${tags || `<span class="helper">No tags yet.</span>`}</div>
+              <h2>${htmlEscape(copy.tags)}</h2>
+              <div class="chips">${tags || `<span class="helper">${htmlEscape(copy.noTags)}</span>`}</div>
             </div>
           </aside>
         </section>
@@ -587,7 +1048,12 @@ function renderDetailPage(request: Request, entry: EntryDetail): string {
   });
 }
 
-function renderAdminPage(request: Request, categories: string[]): string {
+function renderAdminPage(request: Request, lang: Lang, theme: Theme, categories: string[]): string {
+  const copy = ui(lang);
+  const entryCountLabel = lang === "zh" ? "张图" : "images";
+  const createdLabel = lang === "zh" ? "已创建。" : "Created.";
+  const loadFailedLabel = lang === "zh" ? "无法加载条目。" : "Unable to load entries.";
+  const emptyEntriesLabel = lang === "zh" ? "还没有内容。" : "No entries yet.";
   const categoryOptions = [...DEFAULT_CATEGORIES, ...categories]
     .filter((value, index, array) => array.indexOf(value) === index)
     .map((value) => `<option value="${attrEscape(value)}"></option>`)
@@ -595,49 +1061,51 @@ function renderAdminPage(request: Request, categories: string[]): string {
 
   return renderPage({
     title: `${SITE_TITLE} · Admin`,
+    lang,
+    theme,
     body: `
-      ${renderTopBar("admin", SITE_TITLE, SITE_SUBTITLE)}
+      ${renderTopBar("admin", lang, theme, SITE_TITLE, copy.subtitle)}
       <main class="shell">
         <section class="admin-layout">
           <article class="admin-panel">
-            <h1>Add prompt</h1>
-            <p class="helper">Upload images, paste the prompt, set a title and category, then publish. Add more images later by editing the entry.</p>
+            <h1>${htmlEscape(copy.addPrompt)}</h1>
+            <p class="helper">${htmlEscape(lang === "zh" ? "上传图片，粘贴提示词，填写标题和分类后即可发布。之后也可以继续编辑并补充更多图片。" : "Upload images, paste the prompt, set a title and category, then publish. Add more images later by editing the entry.")}</p>
             <form id="entryForm" class="stack" enctype="multipart/form-data">
               <input type="hidden" name="id" id="entryId" />
               <div class="row">
-                <label>Title
-                  <input class="input" name="title" id="titleField" maxlength="120" placeholder="Short, one-line title" required />
+                <label>${htmlEscape(copy.title)}
+                  <input class="input" name="title" id="titleField" maxlength="120" placeholder="${htmlEscape(lang === "zh" ? "尽量短，一行即可" : "Short, one-line title")}" required />
                 </label>
-                <label>Category
-                  <input class="input" name="category" id="categoryField" list="categoryOptions" placeholder="Infographic" required />
+                <label>${htmlEscape(copy.category)}
+                  <input class="input" name="category" id="categoryField" list="categoryOptions" placeholder="${htmlEscape(categoryLabel(lang, DEFAULT_CATEGORIES[0]))}" required />
                   <datalist id="categoryOptions">${categoryOptions}</datalist>
                 </label>
               </div>
               <div class="row">
-                <label>Tags
-                  <input class="input" name="tags" id="tagsField" placeholder="infographic, blue, math" />
+                <label>${htmlEscape(copy.tags)}
+                  <input class="input" name="tags" id="tagsField" placeholder="${htmlEscape(lang === "zh" ? "信息图, 蓝色, 数学" : "infographic, blue, math")}" />
                 </label>
-                <label>Images
+                <label>${htmlEscape(copy.images)}
                   <input class="input" name="images" id="imagesField" type="file" accept="image/*" multiple />
                 </label>
               </div>
-              <label>Prompt
-                <textarea class="textarea" name="prompt" id="promptField" placeholder="Paste the full prompt here" required></textarea>
+              <label>${htmlEscape(copy.prompt)}
+                <textarea class="textarea" name="prompt" id="promptField" placeholder="${htmlEscape(lang === "zh" ? "把完整提示词粘贴到这里" : "Paste the full prompt here")}" required></textarea>
               </label>
               <label style="display:flex;align-items:center;gap:10px;flex-direction:row;">
                 <input type="checkbox" name="is_public" id="publicField" checked />
-                <span>Public</span>
+                <span>${htmlEscape(copy.allowPublic)}</span>
               </label>
               <div class="row one">
-                <button class="button" id="submitButton" type="submit">Publish</button>
-                <button class="button secondary" id="resetButton" type="button">Reset</button>
+                <button class="button" id="submitButton" type="submit">${htmlEscape(copy.publish)}</button>
+                <button class="button secondary" id="resetButton" type="button">${htmlEscape(copy.reset)}</button>
               </div>
               <div id="formStatus" class="status"></div>
             </form>
           </article>
           <aside class="admin-list">
             <div class="actions" style="margin-top:0;">
-              <button class="button secondary" id="refreshListButton" type="button">Refresh list</button>
+              <button class="button secondary" id="refreshListButton" type="button">${htmlEscape(copy.refreshList)}</button>
             </div>
             <div id="entriesList" class="stack"></div>
           </aside>
@@ -658,11 +1126,12 @@ function renderAdminPage(request: Request, categories: string[]): string {
       const publicField = document.getElementById('publicField');
       const entryIdField = document.getElementById('entryId');
       const imagesField = document.getElementById('imagesField');
+      const entryDeleteLabel = ${JSON.stringify(copy.delete)};
 
       function clearForm() {
         form.reset();
         entryIdField.value = '';
-        submitButton.textContent = 'Publish';
+        submitButton.textContent = ${JSON.stringify(copy.publish)};
         status.textContent = '';
         publicField.checked = true;
       }
@@ -674,11 +1143,11 @@ function renderAdminPage(request: Request, categories: string[]): string {
           <img src="\${entry.coverImageUrl}" alt="" />
           <div>
             <h3>\${entry.title}</h3>
-            <p>\${entry.category} · \${(entry.tags || []).join(', ') || 'No tags'} · \${entry.imageCount} images</p>
+            <p>\${entry.category} · \${(entry.tags || []).join(', ') || ${JSON.stringify(copy.noTags)}} · \${entry.imageCount} ${JSON.stringify(entryCountLabel)}</p>
           </div>
           <div class="controls">
-            <button class="button secondary" type="button" data-edit>Edit</button>
-            <button class="button danger" type="button" data-delete>Delete</button>
+            <button class="button secondary" type="button" data-edit>${JSON.stringify(copy.edit)}</button>
+            <button class="button danger" type="button" data-delete>\${entryDeleteLabel}</button>
           </div>
         \`;
         wrapper.querySelector('[data-edit]')?.addEventListener('click', async () => {
@@ -691,18 +1160,18 @@ function renderAdminPage(request: Request, categories: string[]): string {
           tagsField.value = (detail.tags || []).join(', ');
           promptField.value = detail.prompt;
           publicField.checked = Boolean(detail.isPublic);
-          submitButton.textContent = 'Save changes';
-          status.textContent = 'Editing ' + detail.title;
+          submitButton.textContent = ${JSON.stringify(copy.saveChanges)};
+          status.textContent = ${JSON.stringify(copy.editing)} + ' ' + detail.title;
           window.scrollTo({ top: 0, behavior: 'smooth' });
         });
         wrapper.querySelector('[data-delete]')?.addEventListener('click', async () => {
-          if (!confirm('Delete this prompt and all linked images?')) return;
+          if (!confirm(${JSON.stringify(copy.deleteConfirm)})) return;
           const response = await fetch('/api/admin/entries/' + encodeURIComponent(entry.id), { method: 'DELETE' });
           if (!response.ok) {
-            status.textContent = 'Delete failed.';
+            status.textContent = ${JSON.stringify(copy.deleteFailed)};
             return;
           }
-          status.textContent = 'Deleted.';
+          status.textContent = ${JSON.stringify(copy.deleted)};
           await loadEntries();
         });
         return wrapper;
@@ -711,13 +1180,13 @@ function renderAdminPage(request: Request, categories: string[]): string {
       async function loadEntries() {
         const response = await fetch('/api/admin/entries');
         if (!response.ok) {
-          entriesList.innerHTML = '<div class="helper">Unable to load entries.</div>';
+          entriesList.innerHTML = '<div class="helper">${loadFailedLabel}</div>';
           return;
         }
         const payload = await response.json();
         entriesList.innerHTML = '';
         if (!payload.entries.length) {
-          entriesList.innerHTML = '<div class="helper">No entries yet.</div>';
+          entriesList.innerHTML = '<div class="helper">${emptyEntriesLabel}</div>';
           return;
         }
         payload.entries.forEach((entry) => entriesList.appendChild(entryItem(entry)));
@@ -725,7 +1194,7 @@ function renderAdminPage(request: Request, categories: string[]): string {
 
       form.addEventListener('submit', async (event) => {
         event.preventDefault();
-        status.textContent = 'Saving...';
+        status.textContent = ${JSON.stringify(copy.publishing)} + '...';
         submitButton.disabled = true;
         try {
           const formData = new FormData(form);
@@ -738,13 +1207,13 @@ function renderAdminPage(request: Request, categories: string[]): string {
           });
           const payload = await response.json().catch(() => ({}));
           if (!response.ok) {
-            throw new Error(payload.error || 'Save failed');
+            throw new Error(payload.error || ${JSON.stringify(lang === "zh" ? "保存失败" : "Save failed")});
           }
           clearForm();
-          status.textContent = payload.mode === 'update' ? 'Updated.' : 'Created.';
+          status.textContent = payload.mode === 'update' ? ${JSON.stringify(copy.saved)} : ${JSON.stringify(createdLabel)};
           await loadEntries();
         } catch (error) {
-          status.textContent = error instanceof Error ? error.message : 'Save failed.';
+          status.textContent = error instanceof Error ? error.message : ${JSON.stringify(lang === "zh" ? "保存失败" : "Save failed.")};
         } finally {
           submitButton.disabled = false;
         }
@@ -964,6 +1433,9 @@ export default {
     const pathname = url.pathname;
 
     try {
+      const lang = getLang(request);
+      const theme = getTheme(request);
+
       if (pathname === "/") {
         const q = (url.searchParams.get("q") || "").trim();
         const category = (url.searchParams.get("category") || "all").trim() || "all";
@@ -971,14 +1443,14 @@ export default {
           loadEntries(env, request, { q: q || undefined, category: category || undefined }),
           getCategories(env),
         ]);
-        return new Response(renderHomePage(request, entries, categories, q, category), {
+        return new Response(renderHomePage(request, lang, theme, entries, categories, q, category), {
           headers: { "content-type": "text/html; charset=utf-8" },
         });
       }
 
       if (pathname === "/admin") {
         const categories = await getCategories(env);
-        return new Response(renderAdminPage(request, categories), {
+        return new Response(renderAdminPage(request, lang, theme, categories), {
           headers: { "content-type": "text/html; charset=utf-8" },
         });
       }
@@ -987,7 +1459,7 @@ export default {
         const id = decodeURIComponent(pathname.slice("/entry/".length));
         const entry = await loadEntryDetail(env, request, id, false);
         if (!entry) return new Response("Not found", { status: 404 });
-        return new Response(renderDetailPage(request, entry), {
+        return new Response(renderDetailPage(request, lang, theme, entry), {
           headers: { "content-type": "text/html; charset=utf-8" },
         });
       }
