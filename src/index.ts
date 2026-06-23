@@ -1256,8 +1256,6 @@ function renderAdminPage(request: Request, lang: Lang, theme: Theme, categories:
   const entryCountLabel = lang === "zh" ? "张图" : "images";
   const createdLabel = lang === "zh" ? "已创建。" : "Created.";
   const emptyPreviewLabel = lang === "zh" ? "选择左侧条目查看详情，或直接新增一条提示词。" : "Select an entry on the left to preview it, or create a new one.";
-  const loadFailedLabel = lang === "zh" ? "无法加载条目。" : "Unable to load entries.";
-  const emptyEntriesLabel = lang === "zh" ? "还没有内容。" : "No entries yet.";
   const categoryOptions = [...DEFAULT_CATEGORIES, ...categories]
     .filter((value, index, array) => array.indexOf(value) === index)
     .map((value) => `<option value="${attrEscape(value)}"></option>`)
@@ -1312,59 +1310,51 @@ function renderAdminPage(request: Request, lang: Lang, theme: Theme, categories:
             <article class="admin-panel">
               <h1>${htmlEscape(copy.addPrompt)}</h1>
               <p class="helper">${htmlEscape(lang === "zh" ? "点击左侧条目先查看详情，再点编辑回到这里修改标题、分类、标签、提示词和备注。" : "Click an item on the left to preview it, then hit Edit to come back here and change the title, category, tags, prompt, and note.")}</p>
-            <form id="entryForm" class="stack" enctype="multipart/form-data">
-              <input type="hidden" name="id" id="entryId" />
-              <div class="row">
-                <label>${htmlEscape(copy.title)}
-                  <input class="input" name="title" id="titleField" maxlength="120" placeholder="${htmlEscape(lang === "zh" ? "尽量短，一行即可" : "Short, one-line title")}" required />
+              <form id="entryForm" class="stack" enctype="multipart/form-data">
+                <input type="hidden" name="id" id="entryId" />
+                <div class="row">
+                  <label>${htmlEscape(copy.title)}
+                    <input class="input" name="title" id="titleField" maxlength="120" placeholder="${htmlEscape(lang === "zh" ? "尽量短，一行即可" : "Short, one-line title")}" required />
+                  </label>
+                  <label>${htmlEscape(copy.category)}
+                    <input class="input" name="category" id="categoryField" list="categoryOptions" placeholder="${htmlEscape(categoryLabel(lang, DEFAULT_CATEGORIES[0]))}" required />
+                    <datalist id="categoryOptions">${categoryOptions}</datalist>
+                  </label>
+                </div>
+                <div class="row">
+                  <label>${htmlEscape(copy.tags)}
+                    <input class="input" name="tags" id="tagsField" placeholder="${htmlEscape(lang === "zh" ? "信息图, 蓝色, 数学" : "infographic, blue, math")}" />
+                  </label>
+                  <label>${htmlEscape(copy.images)}
+                    <input class="input" name="images" id="imagesField" type="file" accept="image/*" multiple />
+                  </label>
+                </div>
+                <label>${htmlEscape(copy.prompt)}
+                  <textarea class="textarea" name="prompt" id="promptField" placeholder="${htmlEscape(lang === "zh" ? "把完整提示词粘贴到这里" : "Paste the full prompt here")}" required></textarea>
                 </label>
-                <label>${htmlEscape(copy.category)}
-                  <input class="input" name="category" id="categoryField" list="categoryOptions" placeholder="${htmlEscape(categoryLabel(lang, DEFAULT_CATEGORIES[0]))}" required />
-                  <datalist id="categoryOptions">${categoryOptions}</datalist>
+                <label class="note-field">${htmlEscape(copy.note)}
+                  <textarea class="textarea" name="note" id="noteField" placeholder="${htmlEscape(copy.notePlaceholder)}"></textarea>
                 </label>
-              </div>
-              <div class="row">
-                <label>${htmlEscape(copy.tags)}
-                  <input class="input" name="tags" id="tagsField" placeholder="${htmlEscape(lang === "zh" ? "信息图, 蓝色, 数学" : "infographic, blue, math")}" />
+                <label style="display:flex;align-items:center;gap:10px;flex-direction:row;">
+                  <input type="checkbox" name="is_public" id="publicField" checked />
+                  <span>${htmlEscape(copy.allowPublic)}</span>
                 </label>
-                <label>${htmlEscape(copy.images)}
-                  <input class="input" name="images" id="imagesField" type="file" accept="image/*" multiple />
-                </label>
-              </div>
-              <label>${htmlEscape(copy.prompt)}
-                <textarea class="textarea" name="prompt" id="promptField" placeholder="${htmlEscape(lang === "zh" ? "把完整提示词粘贴到这里" : "Paste the full prompt here")}" required></textarea>
-              </label>
-              <label class="note-field">${htmlEscape(copy.note)}
-                <textarea class="textarea" name="note" id="noteField" placeholder="${htmlEscape(copy.notePlaceholder)}"></textarea>
-              </label>
-              <label style="display:flex;align-items:center;gap:10px;flex-direction:row;">
-                <input type="checkbox" name="is_public" id="publicField" checked />
-                <span>${htmlEscape(copy.allowPublic)}</span>
-              </label>
-              <div class="row one">
-                <button class="button" id="submitButton" type="submit">${htmlEscape(copy.publish)}</button>
-                <button class="button secondary" id="resetButton" type="button">${htmlEscape(copy.reset)}</button>
-              </div>
-              <div id="formStatus" class="status"></div>
-            </form>
+                <div class="row one">
+                  <button class="button" id="submitButton" type="submit">${htmlEscape(copy.publish)}</button>
+                  <button class="button secondary" id="resetButton" type="button">${htmlEscape(copy.reset)}</button>
+                </div>
+                <div id="formStatus" class="status"></div>
+              </form>
+            </article>
           </article>
-          </article>
-          <aside class="admin-list">
-            <div class="actions" style="margin-top:0;">
-              <button class="button secondary" id="refreshListButton" type="button">${htmlEscape(copy.refreshList)}</button>
-            </div>
-            <div id="entriesList" class="stack"></div>
-          </aside>
         </section>
       </main>
     `,
     script: `
       const form = document.getElementById('entryForm');
       const status = document.getElementById('formStatus');
-      const entriesList = document.getElementById('entriesList');
       const submitButton = document.getElementById('submitButton');
       const resetButton = document.getElementById('resetButton');
-      const refreshListButton = document.getElementById('refreshListButton');
       const titleField = document.getElementById('titleField');
       const categoryField = document.getElementById('categoryField');
       const tagsField = document.getElementById('tagsField');
@@ -1386,7 +1376,6 @@ function renderAdminPage(request: Request, lang: Lang, theme: Theme, categories:
       const previewOpen = document.querySelector('[data-preview-open]');
       const previewCopy = document.querySelector('[data-preview-copy]');
       const previewEdit = document.querySelector('[data-preview-edit]');
-      const entryDeleteLabel = ${JSON.stringify(copy.delete)};
       let selectedEntryId = '';
       let selectedEntryDetail = null;
 
@@ -1452,66 +1441,6 @@ function renderAdminPage(request: Request, lang: Lang, theme: Theme, categories:
         document.querySelector('.admin-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
 
-      function entryItem(entry) {
-        const wrapper = document.createElement('article');
-        wrapper.className = 'admin-item';
-        wrapper.innerHTML = \`
-          <a class="admin-item-main" href="/admin/entry/\${encodeURIComponent(entry.id)}" data-preview-link>
-            <img src="\${entry.coverImageUrl}" alt="" />
-            <div>
-              <h3>\${entry.title}</h3>
-              <p>\${entry.category} · \${(entry.tags || []).join(', ') || ${JSON.stringify(copy.noTags)}} · \${entry.imageCount} ${JSON.stringify(entryCountLabel)}</p>
-            </div>
-          </a>
-          <div class="controls">
-            <button class="button secondary" type="button" data-edit>${JSON.stringify(copy.edit)}</button>
-            <button class="button danger" type="button" data-delete>\${entryDeleteLabel}</button>
-          </div>
-        \`;
-        wrapper.querySelector('[data-preview-link]')?.addEventListener('click', async (event) => {
-          event.preventDefault();
-          await loadEntryForPreview(entry.id);
-        });
-        wrapper.querySelector('[data-edit]')?.addEventListener('click', async () => {
-          await loadEntryForEdit(entry.id);
-        });
-        wrapper.querySelector('[data-delete]')?.addEventListener('click', async () => {
-          if (!confirm(${JSON.stringify(copy.deleteConfirm)})) return;
-          const response = await fetch('/api/admin/entries/' + encodeURIComponent(entry.id), { method: 'DELETE' });
-          if (!response.ok) {
-            status.textContent = ${JSON.stringify(copy.deleteFailed)};
-            return;
-          }
-          if (selectedEntryId === entry.id) {
-            setPreviewEmpty();
-          }
-          status.textContent = ${JSON.stringify(copy.deleted)};
-          await loadEntries();
-        });
-        return wrapper;
-      }
-
-      async function loadEntries() {
-        const response = await fetch('/api/admin/entries');
-        if (!response.ok) {
-          entriesList.innerHTML = '<div class="helper">${loadFailedLabel}</div>';
-          return;
-        }
-        const payload = await response.json();
-        entriesList.innerHTML = '';
-        if (!payload.entries.length) {
-          entriesList.innerHTML = '<div class="helper">${emptyEntriesLabel}</div>';
-          setPreviewEmpty();
-          return;
-        }
-        payload.entries.forEach((entry) => entriesList.appendChild(entryItem(entry)));
-        if (!selectedEntryId) {
-          await loadEntryForPreview(payload.entries[0].id);
-        } else if (!payload.entries.some((entry) => entry.id === selectedEntryId)) {
-          await loadEntryForPreview(payload.entries[0].id);
-        }
-      }
-
       async function loadEntryForPreview(entryId) {
         const response = await fetch('/api/entries/' + encodeURIComponent(entryId) + '?admin=1');
         if (!response.ok) return;
@@ -1562,7 +1491,9 @@ function renderAdminPage(request: Request, lang: Lang, theme: Theme, categories:
           }
           clearForm();
           status.textContent = payload.mode === 'update' ? ${JSON.stringify(copy.saved)} : ${JSON.stringify(createdLabel)};
-          await loadEntries();
+          if (payload.id) {
+            await loadEntryForPreview(payload.id);
+          }
         } catch (error) {
           status.textContent = error instanceof Error ? error.message : ${JSON.stringify(lang === "zh" ? "保存失败" : "Save failed.")};
         } finally {
@@ -1571,7 +1502,6 @@ function renderAdminPage(request: Request, lang: Lang, theme: Theme, categories:
       });
 
       resetButton.addEventListener('click', clearForm);
-      refreshListButton.addEventListener('click', loadEntries);
       previewEdit?.addEventListener('click', async () => {
         if (!selectedEntryId) return;
         await loadEntryForEdit(selectedEntryId);
@@ -1585,7 +1515,6 @@ function renderAdminPage(request: Request, lang: Lang, theme: Theme, categories:
         const url = selectedEntryDetail.coverImageUrl;
         window.open(url, '_blank', 'noopener');
       });
-      loadEntries();
     `,
   });
 }
