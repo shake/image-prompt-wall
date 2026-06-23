@@ -1,0 +1,1 @@
+ALTER TABLE entries ADD COLUMN prompt_note TEXT NOT NULL DEFAULT '';

@@ -22,6 +22,7 @@ type EntryRow = {
   id: string;
   title: string;
   prompt: string;
+  prompt_note: string;
   category: string;
   tags_json: string;
   cover_image_key: string;
@@ -43,6 +44,7 @@ type EntryDetail = {
   id: string;
   title: string;
   prompt: string;
+  note: string;
   category: string;
   tags: string[];
   coverImageUrl: string;
@@ -75,7 +77,7 @@ const COPY: Record<Lang, {
   category: string;
   clear: string;
   copyPrompt: string;
-  copyTitle: string;
+  download: string;
   created: string;
   deleteConfirm: string;
   deleteFailed: string;
@@ -96,6 +98,9 @@ const COPY: Record<Lang, {
   logout: string;
   menu: string;
   noTags: string;
+  note: string;
+  notePlaceholder: string;
+  noNote: string;
   noPromptsYet: string;
   paperTheme: string;
   prompt: string;
@@ -131,7 +136,7 @@ const COPY: Record<Lang, {
     category: "Category",
     clear: "Clear",
     copyPrompt: "Copy prompt",
-    copyTitle: "Copy title",
+    download: "Download",
     created: "Created",
     deleteConfirm: "Delete this prompt and all linked images?",
     deleteFailed: "Delete failed.",
@@ -152,6 +157,9 @@ const COPY: Record<Lang, {
     logout: "Logout",
     menu: "Menu",
     noTags: "No tags yet.",
+    note: "Remark",
+    notePlaceholder: "Add a short note about how to adapt this prompt.",
+    noNote: "No remark yet.",
     noPromptsYet: "No prompts yet.",
     paperTheme: "Light",
     prompt: "Prompt",
@@ -187,7 +195,7 @@ const COPY: Record<Lang, {
     category: "分类",
     clear: "清空",
     copyPrompt: "复制提示词",
-    copyTitle: "复制标题",
+    download: "下载",
     created: "创建时间",
     deleteConfirm: "确定删除这条提示词和所有关联图片吗？",
     deleteFailed: "删除失败。",
@@ -208,6 +216,9 @@ const COPY: Record<Lang, {
     logout: "退出",
     menu: "菜单",
     noTags: "暂无标签。",
+    note: "备注",
+    notePlaceholder: "补充这条提示词的替换方法和灵活用法。",
+    noNote: "暂无备注。",
     noPromptsYet: "还没有提示词。",
     paperTheme: "浅色",
     prompt: "提示词",
@@ -486,12 +497,27 @@ function renderPage(options: {
       html[data-theme="paper"] { color-scheme: light; --bg: #f8f3e6; --panel: rgba(255, 251, 242, 0.84); --panel-strong: #fffdf8; --text: #1f1d1b; --muted: #766b5f; --line: rgba(79, 59, 32, 0.14); --shadow: 0 18px 50px rgba(72, 49, 10, 0.08); }
       html[data-theme="dark"] { color-scheme: dark; --bg: #0e1116; --panel: rgba(17, 21, 29, 0.84); --panel-strong: #141926; --text: #f1efe8; --muted: #98a2b3; --line: rgba(255, 255, 255, 0.12); --shadow: 0 24px 60px rgba(0, 0, 0, 0.38); --accent: #f0e7d7; --button-bg: #f0e7d7; --button-text: #171411; --button-secondary-bg: rgba(255, 255, 255, 0.08); --button-secondary-text: var(--text); --pill-active-bg: #f0e7d7; --pill-active-text: #171411; }
       html, body { margin: 0; padding: 0; background: radial-gradient(circle at top, color-mix(in srgb, var(--bg) 78%, white) 0, var(--bg) 54%); color: var(--text); font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      html:lang(zh) body { font-size: 15px; }
+      html:lang(zh) .brand h1 { font-size: clamp(26px, 2.75vw, 40px); }
+      html:lang(zh) .panel h1,
+      html:lang(zh) .admin-panel h1 { font-size: clamp(32px, 3.6vw, 52px); line-height: 1.08; letter-spacing: -0.03em; }
+      html:lang(zh) .pill,
+      html:lang(zh) .button,
+      html:lang(zh) .lang-select,
+      html:lang(zh) .menu-item,
+      html:lang(zh) .menu-link { font-size: 0.96em; }
+      html:lang(zh) .card-title { font-size: 14px; line-height: 1.22; }
+      html:lang(zh) pre.prompt,
+      html:lang(zh) .admin-item p,
+      html:lang(zh) .admin-panel label,
+      html:lang(zh) .admin-panel .helper,
+      html:lang(zh) .status { font-size: 13px; }
       body { min-height: 100vh; }
       a { color: inherit; }
-      .shell { width: min(1540px, calc(100vw - 32px)); margin: 0 auto; }
+      .shell { width: min(1720px, calc(100vw - 24px)); margin: 0 auto; }
       .topbar { position: sticky; top: 0; z-index: 20; backdrop-filter: blur(18px); background: color-mix(in srgb, var(--bg) 84%, white 16%); border-bottom: 1px solid var(--line); }
       html[data-theme="dark"] .topbar { background: rgba(10, 13, 18, 0.76); }
-      .topbar-inner { width: min(1540px, calc(100vw - 32px)); margin: 0 auto; display: grid; grid-template-columns: 1fr auto; gap: 16px; padding: 18px 0; align-items: center; }
+      .topbar-inner { width: min(1720px, calc(100vw - 24px)); margin: 0 auto; display: grid; grid-template-columns: 1fr auto; gap: 16px; padding: 18px 0; align-items: center; }
       .brand { display: flex; flex-direction: column; gap: 6px; }
       .brand h1 { margin: 0; font-size: clamp(28px, 3vw, 44px); letter-spacing: -0.04em; }
       .brand p { margin: 0; color: var(--muted); font-size: 15px; }
@@ -623,8 +649,8 @@ function renderPage(options: {
       }
       .detail {
         display: grid;
-        grid-template-columns: minmax(0, 1.15fr) minmax(340px, 0.85fr);
-        gap: 28px;
+        grid-template-columns: minmax(0, 6fr) minmax(0, 4fr);
+        gap: 30px;
         padding: 24px 0 44px;
         align-items: start;
       }
@@ -634,14 +660,67 @@ function renderPage(options: {
         border-radius: var(--radius);
         box-shadow: var(--shadow);
       }
-      .viewer { overflow: hidden; padding: 14px; }
+      .viewer {
+        overflow: hidden;
+        padding: 18px;
+        position: relative;
+        background:
+          radial-gradient(circle at top left, color-mix(in srgb, var(--panel-strong) 88%, var(--bg) 12%) 0%, color-mix(in srgb, var(--panel-strong) 70%, var(--bg) 30%) 52%, color-mix(in srgb, var(--bg) 78%, white 22%) 100%);
+      }
+      .viewer::before {
+        content: "";
+        position: absolute;
+        inset: 10px;
+        border-radius: calc(var(--radius) - 6px);
+        pointer-events: none;
+        border: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+      }
       .main-image {
         display: block;
         width: 100%;
         height: auto;
         border-radius: 18px;
         background: color-mix(in srgb, var(--bg) 80%, white 20%);
+        box-shadow: 0 1px 0 rgba(255,255,255,0.24), 0 18px 40px rgba(0,0,0,0.06);
       }
+      .viewer-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin: 14px 0 8px;
+      }
+      .viewer-actions .button {
+        padding: 11px 16px;
+        border-radius: 999px;
+      }
+      .image-caption {
+        display: grid;
+        gap: 8px;
+        padding: 12px 4px 4px;
+      }
+      .image-title {
+        font-size: 18px;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        line-height: 1.2;
+      }
+      .image-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .image-meta .dot {
+        width: 4px;
+        height: 4px;
+        border-radius: 999px;
+        background: currentColor;
+        opacity: 0.3;
+      }
+      .image-tags { display: flex; flex-wrap: wrap; gap: 8px; }
       .thumbs {
         display: flex;
         gap: 10px;
@@ -660,10 +739,8 @@ function renderPage(options: {
       }
       .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
       .panel, .admin-panel, .admin-list { padding: 20px; }
+      .panel { max-width: 100%; }
       .eyebrow { color: #6b5fbe; font-weight: 700; font-size: 14px; margin-bottom: 8px; }
-      .panel h1, .admin-panel h1 { margin: 0; font-size: clamp(34px, 4vw, 56px); line-height: 1.04; letter-spacing: -0.05em; }
-      .meta { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 14px 0 18px; color: var(--muted); }
-      .meta .dot { width: 4px; height: 4px; border-radius: 999px; background: currentColor; opacity: 0.3; }
       .section { margin-top: 24px; }
       .section h2 { font-size: 14px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 0 0 10px; }
       pre.prompt {
@@ -676,10 +753,21 @@ function renderPage(options: {
         padding: 16px;
         font-size: 15px;
         line-height: 1.6;
+        max-height: 40vh;
+        overflow: auto;
       }
       .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
       .chips { display: flex; flex-wrap: wrap; gap: 10px; }
       .chip { display: inline-flex; align-items: center; padding: 8px 12px; border-radius: 999px; background: var(--panel-strong); border: 1px solid var(--line); font-size: 14px; font-weight: 600; color: var(--text); text-decoration: none; }
+      .remark {
+        padding: 16px;
+        border-radius: 18px;
+        background: color-mix(in srgb, var(--panel-strong) 88%, var(--bg) 12%);
+        border: 1px solid var(--line);
+        color: var(--text);
+        line-height: 1.6;
+        white-space: pre-wrap;
+      }
       .admin-layout { display: grid; grid-template-columns: minmax(0, 0.88fr) minmax(360px, 1.12fr); gap: 24px; padding: 24px 0 44px; align-items: start; }
       .stack { display: grid; gap: 16px; }
       .admin-panel label { display: grid; gap: 8px; font-weight: 600; font-size: 14px; color: var(--muted); }
@@ -694,6 +782,8 @@ function renderPage(options: {
       .admin-panel .row { display: grid; gap: 14px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .admin-panel .row.one { grid-template-columns: 1fr; }
       .admin-panel .helper { color: var(--muted); font-size: 13px; line-height: 1.5; }
+      .note-field { display: grid; gap: 8px; }
+      .note-field .textarea { min-height: 120px; }
       .admin-list { display: grid; gap: 12px; }
       .admin-item { display: grid; grid-template-columns: 84px 1fr auto; gap: 14px; padding: 14px; border-radius: 18px; border: 1px solid var(--line); background: color-mix(in srgb, var(--panel-strong) 80%, var(--bg) 20%); align-items: center; }
       .admin-item img { width: 84px; height: 84px; object-fit: cover; border-radius: 14px; background: color-mix(in srgb, var(--bg) 84%, white 16%); }
@@ -729,6 +819,7 @@ function renderPage(options: {
 
 function renderTopBar(active: "home" | "admin", lang: Lang, theme: Theme, title: string, subtitle: string): string {
   const copy = ui(lang);
+  const showLogout = active === "admin";
   return `<header class="topbar">
     <div class="topbar-inner">
       <div class="brand">
@@ -755,8 +846,7 @@ function renderTopBar(active: "home" | "admin", lang: Lang, theme: Theme, title:
                 <button class="menu-item ${theme === "warm" ? "active" : ""}" type="button" data-theme-value="warm" aria-pressed="${theme === "warm" ? "true" : "false"}">${iconSun()}${htmlEscape(themeLabel(lang, "warm"))}</button>
                 <button class="menu-item ${theme === "dark" ? "active" : ""}" type="button" data-theme-value="dark" aria-pressed="${theme === "dark" ? "true" : "false"}">${iconMoon()}${htmlEscape(themeLabel(lang, "dark"))}</button>
               </div>
-              <hr class="menu-divider" />
-              <a class="menu-link logout" href="/cdn-cgi/access/logout">${htmlEscape(copy.logout)}</a>
+              ${showLogout ? `<hr class="menu-divider" /><a class="menu-link logout" href="/cdn-cgi/access/logout">${htmlEscape(copy.logout)}</a>` : ""}
             </div>
           </div>
         </div>
@@ -814,6 +904,7 @@ async function loadEntries(
       e.id,
       e.title,
       e.prompt,
+      e.prompt_note,
       e.category,
       e.tags_json,
       e.cover_image_key,
@@ -853,6 +944,7 @@ async function loadEntries(
     id: row.id,
     title: row.title,
     prompt: row.prompt,
+    note: row.prompt_note,
     category: row.category,
     tags: parseTags(row.tags_json),
     coverImageUrl: makePublicImageUrl(request, row.cover_image_key),
@@ -873,7 +965,7 @@ async function loadEntryDetail(
   const entry = await env.image_prompt_wall_db
     .prepare(
       `
-      SELECT id, title, prompt, category, tags_json, cover_image_key, created_at, updated_at, is_public
+      SELECT id, title, prompt, prompt_note, category, tags_json, cover_image_key, created_at, updated_at, is_public
       FROM entries
       WHERE id = ? ${admin ? "" : "AND is_public = 1"}
       LIMIT 1
@@ -900,6 +992,7 @@ async function loadEntryDetail(
     id: entry.id,
     title: entry.title,
     prompt: entry.prompt,
+    note: entry.prompt_note,
     category: entry.category,
     tags: parseTags(entry.tags_json),
     coverImageUrl: makePublicImageUrl(request, entry.cover_image_key),
@@ -990,6 +1083,10 @@ function renderDetailPage(request: Request, lang: Lang, theme: Theme, entry: Ent
   const tags = entry.tags
     .map((tag) => `<span class="chip">${htmlEscape(tag)}</span>`)
     .join("");
+  const note = entry.note.trim();
+  const metaTags = entry.tags
+    .map((tag) => `<span class="chip">${htmlEscape(tag)}</span>`)
+    .join("");
 
   return renderPage({
     title: `${entry.title} · ${SITE_TITLE}`,
@@ -1001,29 +1098,36 @@ function renderDetailPage(request: Request, lang: Lang, theme: Theme, entry: Ent
         <section class="detail">
           <article class="viewer">
             <img id="mainImage" class="main-image" src="${htmlEscape(visibleImages[0]?.url || entry.coverImageUrl)}" alt="${attrEscape(entry.title)}" />
+            <div class="viewer-actions">
+              <a class="button secondary" href="${htmlEscape(visibleImages[0]?.url || entry.coverImageUrl)}" target="_blank" rel="noreferrer">${htmlEscape(copy.viewOriginal)}</a>
+              <a class="button secondary" href="${htmlEscape(visibleImages[0]?.url || entry.coverImageUrl)}" download>${htmlEscape(copy.download)}</a>
+            </div>
+            <div class="image-caption">
+              <div class="image-title">${htmlEscape(entry.title)}</div>
+              <div class="image-meta">
+                <span>${htmlEscape(entry.category)}</span>
+                <span class="dot"></span>
+                <span>${htmlEscape(entry.isPublic ? copy.detailPublic : copy.detailPrivate)}</span>
+                <span class="dot"></span>
+                <span>${htmlEscape(entry.createdAt.slice(0, 10))}</span>
+                <span class="dot"></span>
+                <span>${htmlEscape(copy.imageCount(entry.images.length))}</span>
+              </div>
+              ${metaTags ? `<div class="image-tags">${metaTags}</div>` : ""}
+            </div>
             <div class="thumbs">${thumbnails}</div>
           </article>
           <aside class="panel">
-            <div class="eyebrow">${htmlEscape(entry.category)}</div>
-            <h1>${htmlEscape(entry.title)}</h1>
-            <div class="meta">
-              <span>${htmlEscape(entry.isPublic ? copy.detailPublic : copy.detailPrivate)}</span>
-              <span class="dot"></span>
-              <span>${htmlEscape(entry.createdAt.slice(0, 10))}</span>
-              <span class="dot"></span>
-              <span>${htmlEscape(copy.imageCount(entry.images.length))}</span>
-            </div>
-            <div class="actions">
-              <button class="button" type="button" data-copy-title>${htmlEscape(copy.copyTitle)}</button>
-              <button class="button secondary" type="button" data-copy-prompt>${htmlEscape(copy.copyPrompt)}</button>
-            </div>
             <div class="section">
               <h2>${htmlEscape(copy.prompt)}</h2>
+              <div class="actions" style="margin-top:0;">
+                <button class="button secondary" type="button" data-copy-prompt>${htmlEscape(copy.copyPrompt)}</button>
+              </div>
               <pre class="prompt" id="promptText">${htmlEscape(entry.prompt)}</pre>
             </div>
             <div class="section">
-              <h2>${htmlEscape(copy.tags)}</h2>
-              <div class="chips">${tags || `<span class="helper">${htmlEscape(copy.noTags)}</span>`}</div>
+              <h2>${htmlEscape(copy.note)}</h2>
+              <div class="remark">${note ? htmlEscape(note) : htmlEscape(copy.noNote)}</div>
             </div>
           </aside>
         </section>
@@ -1038,9 +1142,6 @@ function renderDetailPage(request: Request, lang: Lang, theme: Theme, entry: Ent
         });
       });
       const promptText = document.getElementById('promptText');
-      document.querySelector('[data-copy-title]')?.addEventListener('click', async () => {
-        await navigator.clipboard.writeText(${JSON.stringify(entry.title)});
-      });
       document.querySelector('[data-copy-prompt]')?.addEventListener('click', async () => {
         await navigator.clipboard.writeText(promptText?.textContent || ${JSON.stringify(entry.prompt)});
       });
@@ -1092,6 +1193,9 @@ function renderAdminPage(request: Request, lang: Lang, theme: Theme, categories:
               <label>${htmlEscape(copy.prompt)}
                 <textarea class="textarea" name="prompt" id="promptField" placeholder="${htmlEscape(lang === "zh" ? "把完整提示词粘贴到这里" : "Paste the full prompt here")}" required></textarea>
               </label>
+              <label class="note-field">${htmlEscape(copy.note)}
+                <textarea class="textarea" name="note" id="noteField" placeholder="${htmlEscape(copy.notePlaceholder)}"></textarea>
+              </label>
               <label style="display:flex;align-items:center;gap:10px;flex-direction:row;">
                 <input type="checkbox" name="is_public" id="publicField" checked />
                 <span>${htmlEscape(copy.allowPublic)}</span>
@@ -1123,6 +1227,7 @@ function renderAdminPage(request: Request, lang: Lang, theme: Theme, categories:
       const categoryField = document.getElementById('categoryField');
       const tagsField = document.getElementById('tagsField');
       const promptField = document.getElementById('promptField');
+      const noteField = document.getElementById('noteField');
       const publicField = document.getElementById('publicField');
       const entryIdField = document.getElementById('entryId');
       const imagesField = document.getElementById('imagesField');
@@ -1159,6 +1264,7 @@ function renderAdminPage(request: Request, lang: Lang, theme: Theme, categories:
           categoryField.value = detail.category;
           tagsField.value = (detail.tags || []).join(', ');
           promptField.value = detail.prompt;
+          noteField.value = detail.note || '';
           publicField.checked = Boolean(detail.isPublic);
           submitButton.textContent = ${JSON.stringify(copy.saveChanges)};
           status.textContent = ${JSON.stringify(copy.editing)} + ' ' + detail.title;
@@ -1262,6 +1368,7 @@ async function handleCreateOrUpdateEntry(request: Request, env: Env): Promise<Re
   const entryId = getFormText(form, "id");
   const title = getFormText(form, "title");
   const prompt = getFormText(form, "prompt");
+  const note = getFormText(form, "note");
   const category = normalizeCategory(getFormText(form, "category"));
   const tags = parseTags(getFormText(form, "tags"));
   const isPublic = getFormBoolean(form, "is_public") ? 1 : 0;
@@ -1307,11 +1414,11 @@ async function handleCreateOrUpdateEntry(request: Request, env: Env): Promise<Re
           .prepare(
             `
             INSERT INTO entries (
-              id, title, prompt, category, tags_json, cover_image_key, created_at, updated_at, is_public
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+              id, title, prompt, prompt_note, category, tags_json, cover_image_key, created_at, updated_at, is_public
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `,
           )
-          .bind(id, title, prompt, category, JSON.stringify(tags), coverKey, now, now, isPublic),
+          .bind(id, title, prompt, note, category, JSON.stringify(tags), coverKey, now, now, isPublic),
         ...images.map((image) =>
           env.image_prompt_wall_db
             .prepare(
@@ -1332,11 +1439,11 @@ async function handleCreateOrUpdateEntry(request: Request, env: Env): Promise<Re
           .prepare(
             `
             UPDATE entries
-            SET title = ?, prompt = ?, category = ?, tags_json = ?, is_public = ?, updated_at = ?
+            SET title = ?, prompt = ?, prompt_note = ?, category = ?, tags_json = ?, is_public = ?, updated_at = ?
             WHERE id = ?
             `,
           )
-          .bind(title, prompt, category, JSON.stringify(tags), isPublic, now, id),
+          .bind(title, prompt, note, category, JSON.stringify(tags), isPublic, now, id),
         ...images.map((image) =>
           env.image_prompt_wall_db
             .prepare(
