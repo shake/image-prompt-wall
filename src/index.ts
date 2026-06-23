@@ -1668,7 +1668,7 @@ export default {
       }
 
       if (pathname.startsWith("/admin/entry/")) {
-        const id = decodeURIComponent(pathname.slice("/admin/entry/".length));
+        const id = decodeURIComponent(pathname.slice("/admin/entry/".length).replace(/\/$/, ""));
         const entry = await loadEntryDetail(env, request, id, true);
         if (!entry) return new Response("Not found", { status: 404 });
         return new Response(renderDetailPage(request, lang, theme, entry, true), {
@@ -1676,7 +1676,7 @@ export default {
         });
       }
 
-      if (pathname === "/admin") {
+      if (pathname === "/admin" || pathname === "/admin/") {
         const categories = await getCategories(env);
         return new Response(renderAdminPage(request, lang, theme, categories), {
           headers: { "content-type": "text/html; charset=utf-8" },
