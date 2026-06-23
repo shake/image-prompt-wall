@@ -1,0 +1,28 @@
+{
+  "name": "image-prompt-wall",
+  "version": "1.0.0",
+  "description": "A personal wall for AI image prompts and generated images.",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "check": "wrangler check",
+    "types": "wrangler types",
+    "d1:migrate": "wrangler d1 migrations apply image-prompt-wall-db --remote"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shake/image-prompt-wall.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/shake/image-prompt-wall/issues"
+  },
+  "homepage": "https://github.com/shake/image-prompt-wall#readme",
+  "devDependencies": {
+    "typescript": "^6.0.3",
+    "wrangler": "^4.103.0"
+  }
+}

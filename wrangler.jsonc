@@ -1,0 +1,19 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "image-prompt-wall",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-06-23",
+  "d1_databases": [
+    {
+      "binding": "image_prompt_wall_db",
+      "database_name": "image-prompt-wall-db",
+      "database_id": "77f0ef84-b335-4e9b-b24d-1247ae315b93"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "image_prompt_wall_images",
+      "bucket_name": "image-prompt-wall-images"
+    }
+  ]
+}
