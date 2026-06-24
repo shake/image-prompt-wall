@@ -1417,7 +1417,7 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
                 <button class="icon-action buttonless viewer-nav viewer-nav-next" type="button" id="canvasNextButton" hidden aria-label="${htmlEscape(lang === "zh" ? "下一张图片" : "Next image")}">${iconChevronRight()}</button>
                 <img id="canvasPreviewImage" class="main-image" alt="" hidden />
                 <div class="admin-canvas-actions viewer-actions">
-                  <button class="button admin-upload-button" type="button" id="uploadTrigger">${iconUpload()}<span>${htmlEscape(uploadLabel)}</span></button>
+                  <button class="icon-action buttonless" type="button" id="uploadTrigger" aria-label="${htmlEscape(uploadLabel)}">${iconUpload()}</button>
                   <button class="icon-action buttonless" type="button" id="uploadIconButton" aria-label="${htmlEscape(uploadLabel)}">${iconUpload()}</button>
                   <button class="icon-action buttonless" type="button" id="clearImagesButton" aria-label="${htmlEscape(copy.clear)}">${iconClose()}</button>
                 </div>
