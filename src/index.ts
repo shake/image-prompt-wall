@@ -1268,7 +1268,6 @@ function renderDetailPage(request: Request, lang: Lang, theme: Theme, entry: Ent
             <div class="viewer-actions">
               <button class="icon-action buttonless" type="button" data-open-original aria-label="${htmlEscape(copy.viewOriginal)}">${iconOpen()}</button>
               <a class="icon-action" data-download-image href="${htmlEscape(currentImage?.url || entry.coverImageUrl)}" download aria-label="${htmlEscape(copy.download)}">${iconDownload()}</a>
-              ${canEdit ? `<a class="icon-action" data-upload-image-link href="/admin?edit=${encodeURIComponent(entry.id)}&image=${currentImageIndex}" aria-label="${htmlEscape(lang === "zh" ? "上传图片" : "Upload image")}">${iconUpload()}</a>` : ""}
             </div>
             <div class="image-caption">
               <div class="image-title">${htmlEscape(entry.title)}</div>
@@ -1318,7 +1317,6 @@ function renderDetailPage(request: Request, lang: Lang, theme: Theme, entry: Ent
       const prevImageButton = document.querySelector('[data-prev-image]');
       const nextImageButton = document.querySelector('[data-next-image]');
       const downloadImageButton = document.querySelector('[data-download-image]');
-      const uploadImageLink = document.querySelector('[data-upload-image-link]');
       const adminEditButton = document.querySelector('[data-admin-edit]');
       const detailImages = ${JSON.stringify(visibleImages)};
       let currentImageIndex = ${currentImageIndex};
@@ -1337,9 +1335,6 @@ function renderDetailPage(request: Request, lang: Lang, theme: Theme, entry: Ent
         if (downloadImageButton instanceof HTMLAnchorElement) {
           downloadImageButton.href = currentImage.url;
         }
-        ${canEdit ? `if (uploadImageLink instanceof HTMLAnchorElement) {
-          uploadImageLink.href = ${JSON.stringify(`/admin?edit=${encodeURIComponent(entry.id)}`)} + '?image=' + currentImageIndex;
-        }` : ""}
         if (modalImage instanceof HTMLImageElement) {
           modalImage.src = currentImage.url;
         }
