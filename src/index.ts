@@ -384,6 +384,10 @@ function iconEdit(): string {
   return `<svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M4 18.5V20h1.5l10.2-10.2-1.5-1.5L4 18.5Z"/><path d="m13.2 8.3 1.5 1.5"/><path d="M14 4.5h5.2a.8.8 0 0 1 .8.8v5.2"/><path d="M19.8 5.3 9.4 15.7"/></svg>`;
 }
 
+function iconRestore(): string {
+  return `<svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M6 12a6 6 0 1 1 2 4.46"/><path d="M6 16v-4h4"/><path d="M9 12h3.5"/></svg>`;
+}
+
 function iconUpload(): string {
   return `<svg viewBox="0 0 1024 1024" aria-hidden="true" width="18" height="18" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M512 96a32 32 0 0 1 32 32v352.96l99.2-99.2a32 32 0 1 1 45.248 45.248l-153.6 153.6a32 32 0 0 1-45.248 0l-153.6-153.6a32 32 0 0 1 45.248-45.248l99.2 99.2V128a32 32 0 0 1 32-32zM192 544a32 32 0 0 1 32 32v224h576V576a32 32 0 0 1 64 0v256a32 32 0 0 1-32 32H160a32 32 0 0 1-32-32V576a32 32 0 0 1 32-32z"/></svg>`;
 }
@@ -1410,12 +1414,20 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
       let selectedEntryId = '';
       let selectedEntryDetail = null;
       let selectedFiles = [];
+      let removalStaged = false;
       let previewObjectUrl = '';
 
       function setCanvasBadge(text) {
         if (!(canvasCountBadge instanceof HTMLElement)) return;
         canvasCountBadge.textContent = text;
         canvasCountBadge.hidden = !text;
+      }
+
+      function updateClearButton() {
+        if (!(clearImagesButton instanceof HTMLButtonElement)) return;
+        clearImagesButton.innerHTML = removalStaged ? ${JSON.stringify(iconRestore())} : ${JSON.stringify(iconClose())};
+        clearImagesButton.setAttribute('aria-label', removalStaged ? ${JSON.stringify(lang === "zh" ? "恢复图片" : "Restore image")} : ${JSON.stringify(copy.clear)});
+        clearImagesButton.title = removalStaged ? ${JSON.stringify(lang === "zh" ? "恢复图片" : "Restore image")} : ${JSON.stringify(copy.clear)};
       }
 
       function revokePreviewObjectUrl() {
@@ -1439,6 +1451,26 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
         if (dropzone instanceof HTMLElement) {
           dropzone.classList.remove('dragover');
         }
+      }
+
+      function updateCanvasHint() {
+        if (selectedFiles.length > 0) {
+          if (removalStaged && selectedEntryDetail) {
+            setCanvasBadge(${JSON.stringify(lang === "zh" ? "已标记删除 · 另有" : "Marked for deletion ·")} + ' ' + selectedFiles.length + ' ${lang === "zh" ? "张新图" : "new images"}');
+          } else {
+            setCanvasBadge(selectedFiles.length + ' ${lang === "zh" ? "张图" : "images"}');
+          }
+          return;
+        }
+        if (selectedEntryDetail && removalStaged) {
+          setCanvasBadge(${JSON.stringify(lang === "zh" ? "已标记删除，点击恢复" : "Marked for deletion. Click restore.")});
+          return;
+        }
+        if (selectedEntryDetail) {
+          setCanvasBadge((selectedEntryDetail.images.length || 1) + ' ${lang === "zh" ? "张图" : "images"}');
+          return;
+        }
+        setCanvasBadge('');
       }
 
       function ensureCategoryOption(value) {
@@ -1469,11 +1501,12 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
           showSelectedFiles(selectedFiles);
           return;
         }
-        if (selectedEntryDetail && !getRemovedImageKey()) {
+        if (selectedEntryDetail && !removalStaged) {
           showDetailCanvas(selectedEntryDetail);
           return;
         }
         setBlankCanvas();
+        updateCanvasHint();
       }
 
       function showDetailCanvas(detail) {
@@ -1486,7 +1519,7 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
         if (canvasEmptyState instanceof HTMLElement) {
           canvasEmptyState.hidden = true;
         }
-        setCanvasBadge((detail.images.length || 1) + ' ${lang === "zh" ? "张图" : "images"}');
+        updateCanvasHint();
       }
 
       function showSelectedFiles(files) {
@@ -1510,13 +1543,15 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
         if (canvasEmptyState instanceof HTMLElement) {
           canvasEmptyState.hidden = true;
         }
-        setCanvasBadge(selectedFiles.length + ' ${lang === "zh" ? "张图" : "images"}');
+        updateCanvasHint();
       }
 
       function resetToCurrentEntry() {
         selectedFiles = [];
         imagesField.value = '';
+        removalStaged = false;
         setRemovedImageKey('');
+        updateClearButton();
         if (selectedEntryDetail) {
           entryIdField.value = selectedEntryDetail.id;
           titleField.value = selectedEntryDetail.title;
@@ -1552,7 +1587,9 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
         selectedEntryId = detail.id;
         selectedEntryDetail = detail;
         entryIdField.value = detail.id;
+        removalStaged = false;
         setRemovedImageKey('');
+        updateClearButton();
         titleField.value = detail.title;
         ensureCategoryOption(detail.category);
         tagsField.value = (detail.tags || []).join(', ');
@@ -1584,17 +1621,22 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
         if (selectedFiles.length > 0) {
           selectedFiles = [];
           imagesField.value = '';
+          updateCanvasHint();
           renderCanvasForCurrentState();
           return;
         }
         if (selectedEntryDetail) {
-          const removedKey = getRemovedImageKey();
-          if (removedKey) {
+          if (removalStaged) {
+            removalStaged = false;
             setRemovedImageKey('');
+            updateClearButton();
             showDetailCanvas(selectedEntryDetail);
           } else {
+            removalStaged = true;
             setRemovedImageKey(selectedEntryDetail.coverImageKey || '');
+            updateClearButton();
             setBlankCanvas();
+            updateCanvasHint();
           }
           return;
         }
