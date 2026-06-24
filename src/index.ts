@@ -743,6 +743,12 @@ function renderPage(options: {
         color: var(--muted);
         font-size: 13px;
       }
+      .image-category {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+      }
       .image-meta .dot {
         width: 4px;
         height: 4px;
@@ -1219,9 +1225,8 @@ function renderDetailPage(request: Request, lang: Lang, theme: Theme, entry: Ent
             </div>
             <div class="image-caption">
               <div class="image-title">${htmlEscape(entry.title)}</div>
+              <div class="image-category"><span class="chip">${htmlEscape(copy.category)} · ${htmlEscape(categoryLabel(lang, entry.category))}</span></div>
               <div class="image-meta">
-                <span>${htmlEscape(entry.category)}</span>
-                <span class="dot"></span>
                 <span>${htmlEscape(entry.isPublic ? copy.detailPublic : copy.detailPrivate)}</span>
                 <span class="dot"></span>
                 <span>${htmlEscape(entry.createdAt.slice(0, 10))}</span>
