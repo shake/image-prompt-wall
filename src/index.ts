@@ -393,6 +393,10 @@ function iconEdit(): string {
   return `<svg viewBox="0 0 1024 1024" aria-hidden="true" width="18" height="18" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M707.968 144.384 879.616 316.032 320 875.648 148.352 704zM912 240.256 783.744 112a64 64 0 0 0-90.496 0l-71.68 71.68 171.648 171.648 119.296-119.296a64 64 0 0 0 0-90.176zM128 896h768a32 32 0 1 0 0-64H128a32 32 0 1 0 0 64z"/></svg>`;
 }
 
+function iconUpload(): string {
+  return `<svg viewBox="0 0 1024 1024" aria-hidden="true" width="18" height="18" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M512 96a32 32 0 0 1 32 32v352.96l99.2-99.2a32 32 0 1 1 45.248 45.248l-153.6 153.6a32 32 0 0 1-45.248 0l-153.6-153.6a32 32 0 0 1 45.248-45.248l99.2 99.2V128a32 32 0 0 1 32-32zM192 544a32 32 0 0 1 32 32v224h576V576a32 32 0 0 1 64 0v256a32 32 0 0 1-32 32H160a32 32 0 0 1-32-32V576a32 32 0 0 1 32-32z"/></svg>`;
+}
+
 function themeIcon(theme: Theme): string {
   if (theme === "paper") return iconPaper();
   if (theme === "warm") return iconSun();
@@ -841,8 +845,70 @@ function renderPage(options: {
         color: #fff;
         cursor: pointer;
       }
-      .admin-layout { display: grid; grid-template-columns: minmax(0, 0.88fr) minmax(360px, 1.12fr); gap: 24px; padding: 24px 0 44px; align-items: start; }
-      .admin-workspace { display: grid; gap: 24px; min-width: 0; }
+      .admin-layout { display: grid; grid-template-columns: minmax(0, 6fr) minmax(360px, 4fr); gap: 30px; padding: 24px 0 44px; align-items: start; }
+      .admin-compose { display: grid; gap: 24px; min-width: 0; }
+      .admin-compose-detail { display: grid; gap: 16px; }
+      .admin-canvas {
+        position: relative;
+        min-height: 520px;
+        padding: 18px;
+      }
+      .admin-canvas.dragover {
+        border-color: color-mix(in srgb, var(--button-bg) 54%, var(--line));
+        box-shadow: 0 0 0 2px color-mix(in srgb, var(--button-bg) 18%, transparent), var(--shadow);
+      }
+      .admin-canvas .main-image {
+        max-height: 66vh;
+        object-fit: contain;
+        background: color-mix(in srgb, var(--bg) 82%, white 18%);
+      }
+      .admin-canvas-actions {
+        position: absolute;
+        top: 22px;
+        right: 22px;
+        z-index: 2;
+      }
+      .admin-drop-empty {
+        position: absolute;
+        inset: 18px;
+        display: grid;
+        place-items: center;
+        gap: 12px;
+        padding: 20px;
+        border-radius: 18px;
+        border: 1px dashed color-mix(in srgb, var(--line) 85%, transparent);
+        background: color-mix(in srgb, var(--panel-strong) 72%, var(--bg) 28%);
+        color: var(--muted);
+        text-align: center;
+      }
+      .admin-drop-empty[hidden] { display: none; }
+      .admin-drop-empty p {
+        margin: 0;
+        max-width: 30ch;
+        line-height: 1.5;
+      }
+      .admin-upload-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .admin-meta-grid {
+        display: grid;
+        gap: 14px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+      .admin-meta-grid label {
+        display: grid;
+        gap: 8px;
+        font-weight: 600;
+        font-size: 14px;
+        color: var(--muted);
+      }
+      .admin-meta-grid .input,
+      .admin-meta-grid .select {
+        min-width: 0;
+        width: 100%;
+      }
       .stack { display: grid; gap: 16px; }
       .admin-panel label { display: grid; gap: 8px; font-weight: 600; font-size: 14px; color: var(--muted); }
       .admin-panel .input, .admin-panel .textarea, .admin-panel .select {
@@ -858,26 +924,10 @@ function renderPage(options: {
       .admin-panel .helper { color: var(--muted); font-size: 13px; line-height: 1.5; }
       .note-field { display: grid; gap: 8px; }
       .note-field .textarea { min-height: 120px; }
-      .admin-list { display: grid; gap: 12px; }
-      .admin-item { display: grid; grid-template-columns: 84px 1fr auto; gap: 14px; padding: 14px; border-radius: 18px; border: 1px solid var(--line); background: color-mix(in srgb, var(--panel-strong) 80%, var(--bg) 20%); align-items: center; }
-      .admin-item-main {
-        display: grid;
-        grid-template-columns: 84px 1fr;
-        gap: 14px;
-        align-items: center;
-        min-width: 0;
-        color: inherit;
-        text-decoration: none;
-      }
-      .admin-item img { width: 84px; height: 84px; object-fit: cover; border-radius: 14px; background: color-mix(in srgb, var(--bg) 84%, white 16%); }
-      html[data-theme="dark"] .admin-item img { background: rgba(255, 255, 255, 0.08); }
-      .admin-item h3 { margin: 0 0 6px; font-size: 18px; line-height: 1.1; }
-      .admin-item p { margin: 0; color: var(--muted); font-size: 14px; }
-      .admin-item .controls { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
       .status { margin-top: 12px; color: var(--muted); font-size: 14px; min-height: 20px; }
       .footer-space { height: 30px; }
       @media (max-width: 980px) {
-        .topbar-inner, .detail, .admin-layout { grid-template-columns: 1fr; }
+        .topbar-inner, .detail, .admin-layout, .admin-meta-grid { grid-template-columns: 1fr; }
         .toolbar { justify-content: flex-start; }
         .top-actions { justify-content: flex-start; }
         .toolbar .search { min-width: min(100%, 560px); }
@@ -1519,6 +1569,304 @@ function renderAdminPage(request: Request, lang: Lang, theme: Theme, categories:
   });
 }
 
+function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, categories: string[]): string {
+  const copy = ui(lang);
+  const createdLabel = lang === "zh" ? "已创建。" : "Created.";
+  const uploadLabel = lang === "zh" ? "上传图片" : "Upload images";
+  const dropHint = lang === "zh" ? "拖拽图片到这里，或者点击上传。" : "Drag images here or click upload.";
+  const emptyCanvasLabel = lang === "zh" ? "还没有图片" : "No image yet";
+  const categoryOptions = [...DEFAULT_CATEGORIES, ...categories]
+    .filter((value, index, array) => array.indexOf(value) === index)
+    .map((value) => `<option value="${attrEscape(value)}"></option>`)
+    .join("");
+
+  return renderPage({
+    title: `${SITE_TITLE} · Admin`,
+    lang,
+    theme,
+    body: `
+      ${renderTopBar("admin", lang, theme, SITE_TITLE, copy.subtitle)}
+      <main class="shell">
+        <form id="entryForm" class="admin-layout" enctype="multipart/form-data">
+          <input type="hidden" name="id" id="entryId" />
+          <article class="admin-compose">
+            <section class="detail admin-compose-detail">
+              <article class="viewer admin-canvas" data-dropzone>
+                <img id="canvasPreviewImage" class="main-image" alt="" hidden />
+                <div class="admin-canvas-actions viewer-actions">
+                  <button class="icon-action buttonless" type="button" id="uploadIconButton" aria-label="${htmlEscape(uploadLabel)}">${iconUpload()}</button>
+                  <button class="icon-action buttonless" type="button" id="clearImagesButton" aria-label="${htmlEscape(copy.clear)}">${iconClose()}</button>
+                </div>
+                <div class="admin-drop-empty" id="canvasEmptyState">
+                  <button class="button admin-upload-button" type="button" id="uploadTrigger">${iconUpload()}<span>${htmlEscape(uploadLabel)}</span></button>
+                  <p>${htmlEscape(dropHint)}</p>
+                </div>
+                <input id="imagesField" type="file" accept="image/*" multiple hidden />
+                <div class="chip" id="canvasCountBadge" hidden></div>
+              </article>
+              <div class="admin-meta-grid">
+                <label>${htmlEscape(copy.title)}
+                  <input class="input" name="title" id="titleField" maxlength="120" placeholder="${htmlEscape(lang === "zh" ? "尽量短，一行即可" : "Short, one-line title")}" required />
+                </label>
+                <label>${htmlEscape(copy.category)}
+                  <input class="input" name="category" id="categoryField" list="categoryOptions" placeholder="${htmlEscape(categoryLabel(lang, DEFAULT_CATEGORIES[0]))}" required />
+                  <datalist id="categoryOptions">${categoryOptions}</datalist>
+                </label>
+                <label>${htmlEscape(copy.tags)}
+                  <input class="input" name="tags" id="tagsField" placeholder="${htmlEscape(lang === "zh" ? "信息图, 蓝色, 数学" : "infographic, blue, math")}" />
+                </label>
+              </div>
+            </section>
+          </article>
+          <aside class="panel admin-panel">
+            <h1>${htmlEscape(copy.addPrompt)}</h1>
+            <p class="helper">${htmlEscape(lang === "zh" ? "左侧是画布和基础信息，右侧填写提示词和备注。拖拽图片到左边，或者点击上传。" : "The left side is the canvas and basic info. Fill prompt and notes on the right. Drag images to the left or click upload.")}</p>
+            <div class="stack">
+              <label>${htmlEscape(copy.prompt)}
+                <textarea class="textarea" name="prompt" id="promptField" placeholder="${htmlEscape(lang === "zh" ? "把完整提示词粘贴到这里" : "Paste the full prompt here")}" required></textarea>
+              </label>
+              <label class="note-field">${htmlEscape(copy.note)}
+                <textarea class="textarea" name="note" id="noteField" placeholder="${htmlEscape(copy.notePlaceholder)}"></textarea>
+              </label>
+              <label style="display:flex;align-items:center;gap:10px;flex-direction:row;">
+                <input type="checkbox" name="is_public" id="publicField" checked />
+                <span>${htmlEscape(copy.allowPublic)}</span>
+              </label>
+              <div class="row one">
+                <button class="button" id="submitButton" type="submit">${htmlEscape(copy.publish)}</button>
+                <button class="button secondary" id="resetButton" type="button">${htmlEscape(copy.reset)}</button>
+              </div>
+              <div id="formStatus" class="status"></div>
+            </div>
+          </aside>
+        </form>
+      </main>
+    `,
+    script: `
+      const form = document.getElementById('entryForm');
+      const status = document.getElementById('formStatus');
+      const submitButton = document.getElementById('submitButton');
+      const resetButton = document.getElementById('resetButton');
+      const titleField = document.getElementById('titleField');
+      const categoryField = document.getElementById('categoryField');
+      const tagsField = document.getElementById('tagsField');
+      const promptField = document.getElementById('promptField');
+      const noteField = document.getElementById('noteField');
+      const publicField = document.getElementById('publicField');
+      const entryIdField = document.getElementById('entryId');
+      const imagesField = document.getElementById('imagesField');
+      const canvasPreviewImage = document.getElementById('canvasPreviewImage');
+      const canvasEmptyState = document.getElementById('canvasEmptyState');
+      const canvasCountBadge = document.getElementById('canvasCountBadge');
+      const uploadTrigger = document.getElementById('uploadTrigger');
+      const uploadIconButton = document.getElementById('uploadIconButton');
+      const clearImagesButton = document.getElementById('clearImagesButton');
+      const dropzone = document.querySelector('[data-dropzone]');
+      let selectedEntryId = '';
+      let selectedEntryDetail = null;
+      let selectedFiles = [];
+      let previewObjectUrl = '';
+
+      function setCanvasBadge(text) {
+        if (!(canvasCountBadge instanceof HTMLElement)) return;
+        canvasCountBadge.textContent = text;
+        canvasCountBadge.hidden = !text;
+      }
+
+      function revokePreviewObjectUrl() {
+        if (previewObjectUrl) {
+          URL.revokeObjectURL(previewObjectUrl);
+          previewObjectUrl = '';
+        }
+      }
+
+      function setBlankCanvas() {
+        revokePreviewObjectUrl();
+        if (canvasPreviewImage instanceof HTMLImageElement) {
+          canvasPreviewImage.removeAttribute('src');
+          canvasPreviewImage.alt = '';
+          canvasPreviewImage.hidden = true;
+        }
+        if (canvasEmptyState instanceof HTMLElement) {
+          canvasEmptyState.hidden = false;
+        }
+        setCanvasBadge('');
+        if (dropzone instanceof HTMLElement) {
+          dropzone.classList.remove('dragover');
+        }
+      }
+
+      function showDetailCanvas(detail) {
+        revokePreviewObjectUrl();
+        if (canvasPreviewImage instanceof HTMLImageElement) {
+          canvasPreviewImage.src = detail.coverImageUrl;
+          canvasPreviewImage.alt = detail.title;
+          canvasPreviewImage.hidden = false;
+        }
+        if (canvasEmptyState instanceof HTMLElement) {
+          canvasEmptyState.hidden = true;
+        }
+        setCanvasBadge((detail.images.length || 1) + ' ${lang === "zh" ? "张图" : "images"}');
+      }
+
+      function showSelectedFiles(files) {
+        selectedFiles = Array.from(files || []);
+        imagesField.value = '';
+        revokePreviewObjectUrl();
+        if (!selectedFiles.length) {
+          if (selectedEntryDetail) {
+            showDetailCanvas(selectedEntryDetail);
+          } else {
+            setBlankCanvas();
+          }
+          return;
+        }
+        previewObjectUrl = URL.createObjectURL(selectedFiles[0]);
+        if (canvasPreviewImage instanceof HTMLImageElement) {
+          canvasPreviewImage.src = previewObjectUrl;
+          canvasPreviewImage.alt = selectedFiles[0].name || ${JSON.stringify(emptyCanvasLabel)};
+          canvasPreviewImage.hidden = false;
+        }
+        if (canvasEmptyState instanceof HTMLElement) {
+          canvasEmptyState.hidden = true;
+        }
+        setCanvasBadge(selectedFiles.length + ' ${lang === "zh" ? "张图" : "images"}');
+      }
+
+      function resetToCurrentEntry() {
+        selectedFiles = [];
+        imagesField.value = '';
+        if (selectedEntryDetail) {
+          entryIdField.value = selectedEntryDetail.id;
+          titleField.value = selectedEntryDetail.title;
+          categoryField.value = selectedEntryDetail.category;
+          tagsField.value = (selectedEntryDetail.tags || []).join(', ');
+          promptField.value = selectedEntryDetail.prompt;
+          noteField.value = selectedEntryDetail.note || '';
+          publicField.checked = Boolean(selectedEntryDetail.isPublic);
+          submitButton.textContent = ${JSON.stringify(copy.saveChanges)};
+          status.textContent = ${JSON.stringify(copy.editing)} + ' ' + selectedEntryDetail.title;
+          showDetailCanvas(selectedEntryDetail);
+        } else {
+          form.reset();
+          entryIdField.value = '';
+          submitButton.textContent = ${JSON.stringify(copy.publish)};
+          status.textContent = '';
+          publicField.checked = true;
+          selectedEntryId = '';
+          setBlankCanvas();
+        }
+      }
+
+      async function loadEntryForEdit(entryId) {
+        const response = await fetch('/api/entries/' + encodeURIComponent(entryId) + '?admin=1');
+        if (!response.ok) {
+          status.textContent = ${JSON.stringify(lang === "zh" ? "条目不存在。" : "Entry not found.")};
+          selectedEntryId = '';
+          selectedEntryDetail = null;
+          resetToCurrentEntry();
+          return;
+        }
+        const detail = await response.json();
+        selectedEntryId = detail.id;
+        selectedEntryDetail = detail;
+        entryIdField.value = detail.id;
+        titleField.value = detail.title;
+        categoryField.value = detail.category;
+        tagsField.value = (detail.tags || []).join(', ');
+        promptField.value = detail.prompt;
+        noteField.value = detail.note || '';
+        publicField.checked = Boolean(detail.isPublic);
+        submitButton.textContent = ${JSON.stringify(copy.saveChanges)};
+        status.textContent = ${JSON.stringify(copy.editing)} + ' ' + detail.title;
+        selectedFiles = [];
+        imagesField.value = '';
+        showDetailCanvas(detail);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
+      const editId = new URLSearchParams(window.location.search).get('edit');
+      if (editId) {
+        loadEntryForEdit(editId);
+      } else {
+        resetToCurrentEntry();
+      }
+
+      uploadTrigger?.addEventListener('click', () => {
+        imagesField?.click();
+      });
+      uploadIconButton?.addEventListener('click', () => {
+        imagesField?.click();
+      });
+      clearImagesButton?.addEventListener('click', () => {
+        selectedFiles = [];
+        imagesField.value = '';
+        if (selectedEntryDetail) {
+          showDetailCanvas(selectedEntryDetail);
+        } else {
+          setBlankCanvas();
+        }
+      });
+      imagesField?.addEventListener('change', () => {
+        showSelectedFiles(imagesField.files ? Array.from(imagesField.files) : []);
+      });
+      dropzone?.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        if (dropzone instanceof HTMLElement) {
+          dropzone.classList.add('dragover');
+        }
+      });
+      dropzone?.addEventListener('dragleave', () => {
+        if (dropzone instanceof HTMLElement) {
+          dropzone.classList.remove('dragover');
+        }
+      });
+      dropzone?.addEventListener('drop', (event) => {
+        event.preventDefault();
+        if (dropzone instanceof HTMLElement) {
+          dropzone.classList.remove('dragover');
+        }
+        const files = event.dataTransfer?.files ? Array.from(event.dataTransfer.files) : [];
+        showSelectedFiles(files);
+      });
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        status.textContent = ${JSON.stringify(copy.publishing)} + '...';
+        submitButton.disabled = true;
+        try {
+          const formData = new FormData(form);
+          if (!publicField.checked) {
+            formData.delete('is_public');
+          }
+          formData.delete('images');
+          selectedFiles.forEach((file) => {
+            formData.append('images', file);
+          });
+          const response = await fetch('/api/admin/entries', {
+            method: 'POST',
+            body: formData,
+          });
+          const payload = await response.json().catch(() => ({}));
+          if (!response.ok) {
+            throw new Error(payload.error || ${JSON.stringify(lang === "zh" ? "保存失败" : "Save failed")});
+          }
+          status.textContent = payload.mode === 'update' ? ${JSON.stringify(copy.saved)} : ${JSON.stringify(createdLabel)};
+          if (payload.id) {
+            await loadEntryForEdit(payload.id);
+          }
+        } catch (error) {
+          status.textContent = error instanceof Error ? error.message : ${JSON.stringify(lang === "zh" ? "保存失败" : "Save failed.")};
+        } finally {
+          submitButton.disabled = false;
+        }
+      });
+
+      resetButton.addEventListener('click', resetToCurrentEntry);
+    `,
+  });
+}
+
 async function uploadImages(
   env: Env,
   entryId: string,
@@ -1753,7 +2101,7 @@ export default {
 
       if (pathname === "/admin" || pathname === "/admin/") {
         const categories = await getCategories(env);
-        return new Response(renderAdminPage(request, lang, theme, categories), {
+        return new Response(renderAdminComposePage(request, lang, theme, categories), {
           headers: { "content-type": "text/html; charset=utf-8" },
         });
       }
