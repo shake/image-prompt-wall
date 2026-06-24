@@ -1371,7 +1371,7 @@ function renderDetailPage(request: Request, lang: Lang, theme: Theme, entry: Ent
         syncCurrentImage();
       });
       adminEditButton?.addEventListener('click', () => {
-        if (adminEditUrl) window.location.href = adminEditUrl + '?image=' + currentImageIndex;
+        if (adminEditUrl) window.location.href = adminEditUrl + '&image=' + currentImageIndex;
       });
       closeModalButton?.addEventListener('click', closeModal);
       modal?.addEventListener('click', (event) => {
