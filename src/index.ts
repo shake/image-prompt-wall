@@ -1418,7 +1418,7 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
                 <img id="canvasPreviewImage" class="main-image" alt="" hidden />
                 <div class="admin-canvas-actions viewer-actions">
                   <button class="icon-action buttonless" type="button" id="uploadTrigger" aria-label="${htmlEscape(uploadLabel)}">${iconUpload()}</button>
-                  <button class="icon-action buttonless" type="button" id="uploadIconButton" aria-label="${htmlEscape(uploadLabel)}">${iconUpload()}</button>
+                  <a class="icon-action buttonless" id="downloadCurrentImageButton" hidden aria-label="${htmlEscape(copy.download)}" download>${iconDownload()}</a>
                   <button class="icon-action buttonless" type="button" id="clearImagesButton" aria-label="${htmlEscape(copy.clear)}">${iconClose()}</button>
                 </div>
                 <div class="admin-drop-empty" id="canvasEmptyState">
@@ -1484,7 +1484,7 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
       const canvasEmptyState = document.getElementById('canvasEmptyState');
       const canvasCountBadge = document.getElementById('canvasCountBadge');
       const uploadTrigger = document.getElementById('uploadTrigger');
-      const uploadIconButton = document.getElementById('uploadIconButton');
+      const downloadCurrentImageButton = document.getElementById('downloadCurrentImageButton');
       const clearImagesButton = document.getElementById('clearImagesButton');
       const canvasPrevButton = document.getElementById('canvasPrevButton');
       const canvasNextButton = document.getElementById('canvasNextButton');
@@ -1535,6 +1535,16 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
         }
         if (canvasNextButton instanceof HTMLButtonElement) {
           canvasNextButton.hidden = !canNavigate;
+        }
+        if (downloadCurrentImageButton instanceof HTMLAnchorElement) {
+          const currentImage = selectedFiles.length > 0
+            ? previewObjectUrl
+            : (images[currentImageIndex]?.url || images[0]?.url || '');
+          const canDownload = Boolean(currentImage);
+          downloadCurrentImageButton.hidden = !canDownload;
+          if (canDownload) {
+            downloadCurrentImageButton.href = currentImage;
+          }
         }
       }
 
@@ -1751,9 +1761,6 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
       }
 
       uploadTrigger?.addEventListener('click', () => {
-        imagesField?.click();
-      });
-      uploadIconButton?.addEventListener('click', () => {
         imagesField?.click();
       });
       canvasPrevButton?.addEventListener('click', () => {
