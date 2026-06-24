@@ -1313,7 +1313,7 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
   const emptyCanvasLabel = lang === "zh" ? "还没有图片" : "No image yet";
   const categoryOptions = [...DEFAULT_CATEGORIES, ...categories]
     .filter((value, index, array) => array.indexOf(value) === index)
-    .map((value) => `<option value="${attrEscape(value)}"></option>`)
+    .map((value) => `<option value="${attrEscape(value)}">${htmlEscape(categoryLabel(lang, value))}</option>`)
     .join("");
 
   return renderPage({
@@ -1345,8 +1345,9 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
                   <input class="input" name="title" id="titleField" maxlength="120" placeholder="${htmlEscape(lang === "zh" ? "尽量短，一行即可" : "Short, one-line title")}" required />
                 </label>
                 <label>${htmlEscape(copy.category)}
-                  <input class="input" name="category" id="categoryField" list="categoryOptions" placeholder="${htmlEscape(categoryLabel(lang, DEFAULT_CATEGORIES[0]))}" required />
-                  <datalist id="categoryOptions">${categoryOptions}</datalist>
+                  <select class="select" name="category" id="categoryField" required>
+                    ${categoryOptions}
+                  </select>
                 </label>
                 <label>${htmlEscape(copy.tags)}
                   <input class="input" name="tags" id="tagsField" placeholder="${htmlEscape(lang === "zh" ? "信息图, 蓝色, 数学" : "infographic, blue, math")}" />
@@ -1432,6 +1433,19 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
         }
       }
 
+      function ensureCategoryOption(value) {
+        if (!(categoryField instanceof HTMLSelectElement) || !value) return;
+        const currentValue = value.trim();
+        const exists = Array.from(categoryField.options).some((option) => option.value === currentValue);
+        if (!exists) {
+          const option = document.createElement('option');
+          option.value = currentValue;
+          option.textContent = currentValue;
+          categoryField.appendChild(option);
+        }
+        categoryField.value = currentValue;
+      }
+
       function showDetailCanvas(detail) {
         revokePreviewObjectUrl();
         if (canvasPreviewImage instanceof HTMLImageElement) {
@@ -1475,7 +1489,7 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
         if (selectedEntryDetail) {
           entryIdField.value = selectedEntryDetail.id;
           titleField.value = selectedEntryDetail.title;
-          categoryField.value = selectedEntryDetail.category;
+          ensureCategoryOption(selectedEntryDetail.category);
           tagsField.value = (selectedEntryDetail.tags || []).join(', ');
           promptField.value = selectedEntryDetail.prompt;
           noteField.value = selectedEntryDetail.note || '';
@@ -1508,7 +1522,7 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
         selectedEntryDetail = detail;
         entryIdField.value = detail.id;
         titleField.value = detail.title;
-        categoryField.value = detail.category;
+        ensureCategoryOption(detail.category);
         tagsField.value = (detail.tags || []).join(', ');
         promptField.value = detail.prompt;
         noteField.value = detail.note || '';
