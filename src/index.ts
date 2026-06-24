@@ -391,7 +391,7 @@ function iconRestore(): string {
 }
 
 function iconUpload(): string {
-  return `<svg viewBox="0 0 1024 1024" aria-hidden="true" width="18" height="18" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M512 96a32 32 0 0 1 32 32v352.96l99.2-99.2a32 32 0 1 1 45.248 45.248l-153.6 153.6a32 32 0 0 1-45.248 0l-153.6-153.6a32 32 0 0 1 45.248-45.248l99.2 99.2V128a32 32 0 0 1 32-32zM192 544a32 32 0 0 1 32 32v224h576V576a32 32 0 0 1 64 0v256a32 32 0 0 1-32 32H160a32 32 0 0 1-32-32V576a32 32 0 0 1 32-32z"/></svg>`;
+  return `<svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M12 4v10"/><path d="m8.5 7.5 3.5-3.5 3.5 3.5"/><path d="M5 15.5a2.5 2.5 0 0 0 2.5 2.5h9a2.5 2.5 0 0 0 2.5-2.5"/><path d="M6.5 16h11"/></svg>`;
 }
 
 function iconChevronLeft(): string {
