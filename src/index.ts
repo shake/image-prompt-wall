@@ -884,7 +884,8 @@ function renderPage(options: {
       .admin-meta-grid {
         display: grid;
         gap: 14px;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-columns: minmax(0, 1.2fr) minmax(180px, 220px) minmax(0, 1fr);
+        align-items: end;
       }
       .admin-meta-grid label {
         display: grid;
@@ -897,6 +898,10 @@ function renderPage(options: {
       .admin-meta-grid .select {
         min-width: 0;
         width: 100%;
+      }
+      .admin-meta-grid label:nth-child(2) .input,
+      .admin-meta-grid label:nth-child(2) .select {
+        max-width: 220px;
       }
       .stack { display: grid; gap: 16px; }
       .admin-panel label { display: grid; gap: 8px; font-weight: 600; font-size: 14px; color: var(--muted); }
