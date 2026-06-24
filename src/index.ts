@@ -62,10 +62,6 @@ type EntryListItem = EntryDetail & {
   imageCount: number;
 };
 
-type AdminEntrySummary = EntryListItem & {
-  imageCount: number;
-};
-
 const COPY: Record<Lang, {
   all: string;
   allCategories: string;
@@ -95,7 +91,6 @@ const COPY: Record<Lang, {
   images: string;
   info: string;
   language: string;
-  loadFailed: string;
   logout: string;
   menu: string;
   noTags: string;
@@ -108,7 +103,6 @@ const COPY: Record<Lang, {
   prompts: string;
   publish: string;
   publishing: string;
-  refreshList: string;
   reset: string;
   saveChanges: string;
   saved: string;
@@ -155,7 +149,6 @@ const COPY: Record<Lang, {
     images: "Images",
     info: "Info",
     language: "Language",
-    loadFailed: "Unable to load entries.",
     logout: "Logout",
     menu: "Menu",
     noTags: "No tags yet.",
@@ -168,7 +161,6 @@ const COPY: Record<Lang, {
     prompts: "prompts",
     publish: "Publish",
     publishing: "Publishing",
-    refreshList: "Refresh list",
     reset: "Reset",
     saveChanges: "Save changes",
     saved: "Saved",
@@ -215,7 +207,6 @@ const COPY: Record<Lang, {
     images: "图片",
     info: "说明",
     language: "语言",
-    loadFailed: "无法加载条目。",
     logout: "退出",
     menu: "菜单",
     noTags: "暂无标签。",
@@ -228,7 +219,6 @@ const COPY: Record<Lang, {
     prompts: "条",
     publish: "发布",
     publishing: "正在保存",
-    refreshList: "刷新列表",
     reset: "重置",
     saveChanges: "保存修改",
     saved: "已保存",
@@ -535,7 +525,6 @@ function renderPage(options: {
       html:lang(zh) .menu-link { font-size: 0.93em; }
       html:lang(zh) .card-title { font-size: 14px; line-height: 1.22; }
       html:lang(zh) pre.prompt,
-      html:lang(zh) .admin-item p,
       html:lang(zh) .admin-panel label,
       html:lang(zh) .admin-panel .helper,
       html:lang(zh) .status { font-size: 13px; }
@@ -681,7 +670,7 @@ function renderPage(options: {
         padding: 24px 0 44px;
         align-items: start;
       }
-      .viewer, .panel, .admin-panel, .admin-list {
+      .viewer, .panel, .admin-panel {
         border: 1px solid var(--line);
         background: color-mix(in srgb, var(--panel-strong) 80%, var(--bg) 20%);
         border-radius: var(--radius);
@@ -762,7 +751,7 @@ function renderPage(options: {
         opacity: 0.3;
       }
       .image-tags { display: flex; flex-wrap: wrap; gap: 8px; }
-      .panel, .admin-panel, .admin-list { padding: 20px; }
+      .panel, .admin-panel { padding: 20px; }
       .panel { max-width: 100%; }
       .eyebrow { color: #6b5fbe; font-weight: 700; font-size: 14px; margin-bottom: 8px; }
       .section { margin-top: 24px; }
@@ -936,8 +925,6 @@ function renderPage(options: {
       @media (max-width: 640px) {
         .shell, .topbar-inner { width: min(100vw - 20px, 1540px); }
         .cards { column-width: 100%; }
-        .admin-item { grid-template-columns: 72px 1fr; }
-        .admin-item .controls { grid-column: 1 / -1; justify-content: flex-start; }
         .admin-panel .row { grid-template-columns: 1fr; }
       }
     </style>
@@ -1296,274 +1283,6 @@ function renderDetailPage(request: Request, lang: Lang, theme: Theme, entry: Ent
       const promptText = document.getElementById('promptText');
       document.querySelector('[data-copy-prompt]')?.addEventListener('click', async () => {
         await navigator.clipboard.writeText(promptText?.textContent || ${JSON.stringify(entry.prompt)});
-      });
-    `,
-  });
-}
-
-function renderAdminPage(request: Request, lang: Lang, theme: Theme, categories: string[]): string {
-  const copy = ui(lang);
-  const entryCountLabel = lang === "zh" ? "张图" : "images";
-  const createdLabel = lang === "zh" ? "已创建。" : "Created.";
-  const emptyPreviewLabel = lang === "zh" ? "选择左侧条目查看详情，或直接新增一条提示词。" : "Select an entry on the left to preview it, or create a new one.";
-  const categoryOptions = [...DEFAULT_CATEGORIES, ...categories]
-    .filter((value, index, array) => array.indexOf(value) === index)
-    .map((value) => `<option value="${attrEscape(value)}"></option>`)
-    .join("");
-
-  return renderPage({
-    title: `${SITE_TITLE} · Admin`,
-    lang,
-    theme,
-    body: `
-      ${renderTopBar("admin", lang, theme, SITE_TITLE, copy.subtitle)}
-      <main class="shell">
-        <section class="admin-layout">
-          <article class="admin-workspace">
-            <section class="detail admin-preview" id="adminPreview">
-              <article class="viewer">
-                <img id="previewMainImage" class="main-image" alt="" hidden />
-                <div class="viewer-actions">
-                  <button class="icon-action buttonless" type="button" data-preview-open aria-label="${htmlEscape(copy.viewOriginal)}">${iconOpen()}</button>
-                  <a class="icon-action" data-preview-download href="#" download aria-label="${htmlEscape(copy.download)}">${iconDownload()}</a>
-                  <button class="icon-action buttonless" type="button" data-preview-edit aria-label="${htmlEscape(copy.edit)}">${iconEdit()}</button>
-                </div>
-                <div class="image-caption">
-                  <div class="image-title" id="previewTitle">${htmlEscape(emptyPreviewLabel)}</div>
-                  <div class="image-meta">
-                    <span id="previewCategory">-</span>
-                    <span class="dot"></span>
-                    <span id="previewVisibility">-</span>
-                    <span class="dot"></span>
-                    <span id="previewDate">-</span>
-                    <span class="dot"></span>
-                    <span id="previewCount">-</span>
-                  </div>
-                  <div class="image-tags" id="previewTags"></div>
-                </div>
-              </article>
-              <aside class="panel">
-                <div class="section">
-                  <div class="actions icon-row" style="margin-top:0; justify-content: space-between; align-items: center;">
-                    <h2 style="margin:0;">${htmlEscape(copy.prompt)}</h2>
-                    <button class="icon-action" type="button" data-preview-copy aria-label="${htmlEscape(copy.copyPrompt)}">${iconCopy()}</button>
-                  </div>
-                  <pre class="prompt" id="previewPrompt">${htmlEscape(emptyPreviewLabel)}</pre>
-                </div>
-                <div class="section">
-                  <h2>${htmlEscape(copy.note)}</h2>
-                  <div class="remark" id="previewNote">${htmlEscape(emptyPreviewLabel)}</div>
-                </div>
-              </aside>
-            </section>
-
-            <article class="admin-panel">
-              <h1>${htmlEscape(copy.addPrompt)}</h1>
-              <p class="helper">${htmlEscape(lang === "zh" ? "点击左侧条目先查看详情，再点编辑回到这里修改标题、分类、标签、提示词和备注。" : "Click an item on the left to preview it, then hit Edit to come back here and change the title, category, tags, prompt, and note.")}</p>
-              <form id="entryForm" class="stack" enctype="multipart/form-data">
-                <input type="hidden" name="id" id="entryId" />
-                <div class="row">
-                  <label>${htmlEscape(copy.title)}
-                    <input class="input" name="title" id="titleField" maxlength="120" placeholder="${htmlEscape(lang === "zh" ? "尽量短，一行即可" : "Short, one-line title")}" required />
-                  </label>
-                  <label>${htmlEscape(copy.category)}
-                    <input class="input" name="category" id="categoryField" list="categoryOptions" placeholder="${htmlEscape(categoryLabel(lang, DEFAULT_CATEGORIES[0]))}" required />
-                    <datalist id="categoryOptions">${categoryOptions}</datalist>
-                  </label>
-                </div>
-                <div class="row">
-                  <label>${htmlEscape(copy.tags)}
-                    <input class="input" name="tags" id="tagsField" placeholder="${htmlEscape(lang === "zh" ? "信息图, 蓝色, 数学" : "infographic, blue, math")}" />
-                  </label>
-                  <label>${htmlEscape(copy.images)}
-                    <input class="input" name="images" id="imagesField" type="file" accept="image/*" multiple />
-                  </label>
-                </div>
-                <label>${htmlEscape(copy.prompt)}
-                  <textarea class="textarea" name="prompt" id="promptField" placeholder="${htmlEscape(lang === "zh" ? "把完整提示词粘贴到这里" : "Paste the full prompt here")}" required></textarea>
-                </label>
-                <label class="note-field">${htmlEscape(copy.note)}
-                  <textarea class="textarea" name="note" id="noteField" placeholder="${htmlEscape(copy.notePlaceholder)}"></textarea>
-                </label>
-                <label style="display:flex;align-items:center;gap:10px;flex-direction:row;">
-                  <input type="checkbox" name="is_public" id="publicField" checked />
-                  <span>${htmlEscape(copy.allowPublic)}</span>
-                </label>
-                <div class="row one">
-                  <button class="button" id="submitButton" type="submit">${htmlEscape(copy.publish)}</button>
-                  <button class="button secondary" id="resetButton" type="button">${htmlEscape(copy.reset)}</button>
-                </div>
-                <div id="formStatus" class="status"></div>
-              </form>
-            </article>
-          </article>
-        </section>
-      </main>
-    `,
-    script: `
-      const form = document.getElementById('entryForm');
-      const status = document.getElementById('formStatus');
-      const submitButton = document.getElementById('submitButton');
-      const resetButton = document.getElementById('resetButton');
-      const titleField = document.getElementById('titleField');
-      const categoryField = document.getElementById('categoryField');
-      const tagsField = document.getElementById('tagsField');
-      const promptField = document.getElementById('promptField');
-      const noteField = document.getElementById('noteField');
-      const publicField = document.getElementById('publicField');
-      const entryIdField = document.getElementById('entryId');
-      const imagesField = document.getElementById('imagesField');
-      const previewMainImage = document.getElementById('previewMainImage');
-      const previewTitle = document.getElementById('previewTitle');
-      const previewCategory = document.getElementById('previewCategory');
-      const previewVisibility = document.getElementById('previewVisibility');
-      const previewDate = document.getElementById('previewDate');
-      const previewCount = document.getElementById('previewCount');
-      const previewTags = document.getElementById('previewTags');
-      const previewPrompt = document.getElementById('previewPrompt');
-      const previewNote = document.getElementById('previewNote');
-      const previewDownload = document.querySelector('[data-preview-download]');
-      const previewOpen = document.querySelector('[data-preview-open]');
-      const previewCopy = document.querySelector('[data-preview-copy]');
-      const previewEdit = document.querySelector('[data-preview-edit]');
-      let selectedEntryId = '';
-      let selectedEntryDetail = null;
-
-      function clearForm() {
-        form.reset();
-        entryIdField.value = '';
-        submitButton.textContent = ${JSON.stringify(copy.publish)};
-        status.textContent = '';
-        publicField.checked = true;
-      }
-
-      function setPreview(detail) {
-        selectedEntryId = detail.id;
-        selectedEntryDetail = detail;
-        if (previewMainImage instanceof HTMLImageElement) {
-          previewMainImage.src = detail.coverImageUrl;
-          previewMainImage.alt = detail.title;
-          previewMainImage.hidden = false;
-        }
-        if (previewDownload instanceof HTMLAnchorElement) {
-          previewDownload.href = detail.coverImageUrl;
-        }
-        if (previewTitle) previewTitle.textContent = detail.title;
-        if (previewCategory) previewCategory.textContent = detail.category;
-        if (previewVisibility) previewVisibility.textContent = detail.isPublic ? ${JSON.stringify(copy.detailPublic)} : ${JSON.stringify(copy.detailPrivate)};
-        if (previewDate) previewDate.textContent = detail.createdAt.slice(0, 10);
-        if (previewCount) previewCount.textContent = (detail.images.length || 1) + ' ' + ${JSON.stringify(entryCountLabel)};
-        if (previewTags instanceof HTMLElement) {
-          previewTags.replaceChildren();
-          (detail.tags || []).forEach((tag) => {
-            const chip = document.createElement('span');
-            chip.className = 'chip';
-            chip.textContent = tag;
-            previewTags.appendChild(chip);
-          });
-        }
-        if (previewPrompt) previewPrompt.textContent = detail.prompt;
-        if (previewNote) previewNote.textContent = detail.note?.trim() || ${JSON.stringify(copy.noNote)};
-      }
-
-      function setPreviewEmpty() {
-        selectedEntryId = '';
-        selectedEntryDetail = null;
-        if (previewMainImage instanceof HTMLImageElement) {
-          previewMainImage.removeAttribute('src');
-          previewMainImage.alt = '';
-          previewMainImage.hidden = true;
-        }
-        if (previewDownload instanceof HTMLAnchorElement) {
-          previewDownload.removeAttribute('href');
-        }
-        if (previewTitle) previewTitle.textContent = ${JSON.stringify(emptyPreviewLabel)};
-        if (previewCategory) previewCategory.textContent = '-';
-        if (previewVisibility) previewVisibility.textContent = '-';
-        if (previewDate) previewDate.textContent = '-';
-        if (previewCount) previewCount.textContent = '-';
-        if (previewTags instanceof HTMLElement) previewTags.replaceChildren();
-        if (previewPrompt) previewPrompt.textContent = ${JSON.stringify(emptyPreviewLabel)};
-        if (previewNote) previewNote.textContent = ${JSON.stringify(emptyPreviewLabel)};
-      }
-
-      function focusEditor() {
-        document.querySelector('.admin-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-
-      async function loadEntryForPreview(entryId) {
-        const response = await fetch('/api/entries/' + encodeURIComponent(entryId) + '?admin=1');
-        if (!response.ok) return;
-        const detail = await response.json();
-        setPreview(detail);
-      }
-
-      async function loadEntryForEdit(entryId) {
-        const response = await fetch('/api/entries/' + encodeURIComponent(entryId) + '?admin=1');
-        if (!response.ok) return;
-        const detail = await response.json();
-        setPreview(detail);
-        entryIdField.value = detail.id;
-        titleField.value = detail.title;
-        categoryField.value = detail.category;
-        tagsField.value = (detail.tags || []).join(', ');
-        promptField.value = detail.prompt;
-        noteField.value = detail.note || '';
-        publicField.checked = Boolean(detail.isPublic);
-        submitButton.textContent = ${JSON.stringify(copy.saveChanges)};
-        status.textContent = ${JSON.stringify(copy.editing)} + ' ' + detail.title;
-        focusEditor();
-      }
-
-      const editId = new URLSearchParams(window.location.search).get('edit');
-      if (editId) {
-        loadEntryForEdit(editId);
-      } else {
-        setPreviewEmpty();
-      }
-
-      form.addEventListener('submit', async (event) => {
-        event.preventDefault();
-        status.textContent = ${JSON.stringify(copy.publishing)} + '...';
-        submitButton.disabled = true;
-        try {
-          const formData = new FormData(form);
-          if (!publicField.checked) {
-            formData.delete('is_public');
-          }
-          const response = await fetch('/api/admin/entries', {
-            method: 'POST',
-            body: formData,
-          });
-          const payload = await response.json().catch(() => ({}));
-          if (!response.ok) {
-            throw new Error(payload.error || ${JSON.stringify(lang === "zh" ? "保存失败" : "Save failed")});
-          }
-          clearForm();
-          status.textContent = payload.mode === 'update' ? ${JSON.stringify(copy.saved)} : ${JSON.stringify(createdLabel)};
-          if (payload.id) {
-            await loadEntryForPreview(payload.id);
-          }
-        } catch (error) {
-          status.textContent = error instanceof Error ? error.message : ${JSON.stringify(lang === "zh" ? "保存失败" : "Save failed.")};
-        } finally {
-          submitButton.disabled = false;
-        }
-      });
-
-      resetButton.addEventListener('click', clearForm);
-      previewEdit?.addEventListener('click', async () => {
-        if (!selectedEntryId) return;
-        await loadEntryForEdit(selectedEntryId);
-      });
-      previewCopy?.addEventListener('click', async () => {
-        if (!selectedEntryDetail) return;
-        await navigator.clipboard.writeText(selectedEntryDetail.prompt || '');
-      });
-      previewOpen?.addEventListener('click', () => {
-        if (!selectedEntryDetail) return;
-        const url = selectedEntryDetail.coverImageUrl;
-        window.open(url, '_blank', 'noopener');
       });
     `,
   });
@@ -2133,11 +1852,6 @@ export default {
         const id = decodeURIComponent(pathname.slice("/api/entries/".length));
         const admin = url.searchParams.get("admin") === "1";
         return jsonEntryResponse(env, request, id, admin);
-      }
-
-      if (pathname === "/api/admin/entries" && request.method === "GET") {
-        const entries = await loadEntries(env, request, { admin: true });
-        return Response.json({ entries: entries as AdminEntrySummary[] });
       }
 
       if (pathname === "/api/admin/entries" && request.method === "POST") {
