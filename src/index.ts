@@ -834,9 +834,9 @@ function renderPage(options: {
         color: #fff;
         cursor: pointer;
       }
-      .admin-layout { display: grid; grid-template-columns: minmax(0, 6fr) minmax(360px, 4fr); gap: 30px; padding: 24px 0 44px; align-items: start; }
-      .admin-compose { display: grid; gap: 24px; min-width: 0; }
-      .admin-compose-detail { display: grid; gap: 16px; }
+      .admin-layout { display: block; padding: 24px 0 44px; }
+      .admin-compose-detail { display: grid; grid-template-columns: minmax(0, 6fr) minmax(360px, 4fr); gap: 30px; min-width: 0; align-items: start; }
+      .admin-compose-main { display: grid; gap: 16px; min-width: 0; }
       .admin-canvas {
         position: relative;
         min-height: 520px;
@@ -916,7 +916,7 @@ function renderPage(options: {
       .status { margin-top: 12px; color: var(--muted); font-size: 14px; min-height: 20px; }
       .footer-space { height: 30px; }
       @media (max-width: 980px) {
-        .topbar-inner, .detail, .admin-layout, .admin-meta-grid { grid-template-columns: 1fr; }
+        .topbar-inner, .detail, .admin-compose-detail, .admin-meta-grid { grid-template-columns: 1fr; }
         .toolbar { justify-content: flex-start; }
         .top-actions { justify-content: flex-start; }
         .toolbar .search { min-width: min(100%, 560px); }
@@ -1308,8 +1308,8 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
       <main class="shell">
         <form id="entryForm" class="admin-layout" enctype="multipart/form-data">
           <input type="hidden" name="id" id="entryId" />
-          <article class="admin-compose">
-            <section class="detail admin-compose-detail">
+          <section class="admin-compose-detail">
+            <div class="admin-compose-main">
               <article class="viewer admin-canvas" data-dropzone>
                 <img id="canvasPreviewImage" class="main-image" alt="" hidden />
                 <div class="admin-canvas-actions viewer-actions">
@@ -1335,8 +1335,7 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
                   <input class="input" name="tags" id="tagsField" placeholder="${htmlEscape(lang === "zh" ? "信息图, 蓝色, 数学" : "infographic, blue, math")}" />
                 </label>
               </div>
-            </section>
-          </article>
+            </div>
           <aside class="panel admin-panel">
             <h1>${htmlEscape(copy.addPrompt)}</h1>
             <p class="helper">${htmlEscape(lang === "zh" ? "左侧是画布和基础信息，右侧填写提示词和备注。拖拽图片到左边，或者点击上传。" : "The left side is the canvas and basic info. Fill prompt and notes on the right. Drag images to the left or click upload.")}</p>
@@ -1358,6 +1357,7 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
               <div id="formStatus" class="status"></div>
             </div>
           </aside>
+          </section>
         </form>
       </main>
     `,
