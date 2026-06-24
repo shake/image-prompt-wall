@@ -380,7 +380,7 @@ function iconClose(): string {
 }
 
 function iconEdit(): string {
-  return `<svg viewBox="0 0 1024 1024" aria-hidden="true" width="18" height="18" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M707.968 144.384 879.616 316.032 320 875.648 148.352 704zM912 240.256 783.744 112a64 64 0 0 0-90.496 0l-71.68 71.68 171.648 171.648 119.296-119.296a64 64 0 0 0 0-90.176zM128 896h768a32 32 0 1 0 0-64H128a32 32 0 1 0 0 64z"/></svg>`;
+  return `<svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M4 18.5V20h1.5l10.2-10.2-1.5-1.5L4 18.5Z"/><path d="m13.2 8.3 1.5 1.5"/><path d="M14 4.5h5.2a.8.8 0 0 1 .8.8v5.2"/><path d="M19.8 5.3 9.4 15.7"/></svg>`;
 }
 
 function iconUpload(): string {
@@ -1233,7 +1233,7 @@ function renderDetailPage(request: Request, lang: Lang, theme: Theme, entry: Ent
             <div class="image-caption">
               <div class="image-title">${htmlEscape(entry.title)}</div>
               <div class="image-category"><span class="chip">${htmlEscape(copy.category)} · ${htmlEscape(categoryLabel(lang, entry.category))}</span></div>
-              <div class="image-meta">
+            <div class="image-meta">
                 <span>${htmlEscape(entry.isPublic ? copy.detailPublic : copy.detailPrivate)}</span>
                 <span class="dot"></span>
                 <span>${htmlEscape(entry.createdAt.slice(0, 10))}</span>
@@ -1242,13 +1242,16 @@ function renderDetailPage(request: Request, lang: Lang, theme: Theme, entry: Ent
               </div>
               ${metaTags ? `<div class="image-tags">${metaTags}</div>` : ""}
             </div>
-            ${canEdit ? `<div class="admin-detail-actions">${adminMode ? `<a class="button secondary" href="/admin">${htmlEscape(lang === "zh" ? "返回后台" : "Back to admin")}</a>` : ""}<button class="button" type="button" data-admin-edit>${iconEdit()}<span>${htmlEscape(copy.edit)}</span></button></div>` : ""}
+            ${adminMode ? `<div class="admin-detail-actions"><a class="button secondary" href="/admin">${htmlEscape(lang === "zh" ? "返回后台" : "Back to admin")}</a></div>` : ""}
           </article>
           <aside class="panel">
             <div class="section">
               <div class="actions icon-row" style="margin-top:0; justify-content: space-between; align-items: center;">
                 <h2 style="margin:0;">${htmlEscape(copy.prompt)}</h2>
-                <button class="icon-action" type="button" data-copy-prompt aria-label="${htmlEscape(copy.copyPrompt)}">${iconCopy()}</button>
+                <div class="actions icon-row" style="margin:0; align-items:center;">
+                  ${canEdit ? `<button class="icon-action buttonless" type="button" data-admin-edit aria-label="${htmlEscape(copy.edit)}">${iconEdit()}</button>` : ""}
+                  <button class="icon-action" type="button" data-copy-prompt aria-label="${htmlEscape(copy.copyPrompt)}">${iconCopy()}</button>
+                </div>
               </div>
               <pre class="prompt" id="promptText">${htmlEscape(entry.prompt)}</pre>
             </div>
