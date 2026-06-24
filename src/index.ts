@@ -47,6 +47,7 @@ type EntryDetail = {
   note: string;
   category: string;
   tags: string[];
+  coverImageKey: string;
   coverImageUrl: string;
   createdAt: string;
   updatedAt: string;
@@ -1084,6 +1085,7 @@ async function loadEntries(
     note: row.prompt_note,
     category: row.category,
     tags: parseTags(row.tags_json),
+    coverImageKey: row.cover_image_key,
     coverImageUrl: makePublicImageUrl(request, row.cover_image_key),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -1132,6 +1134,7 @@ async function loadEntryDetail(
     note: entry.prompt_note,
     category: entry.category,
     tags: parseTags(entry.tags_json),
+    coverImageKey: entry.cover_image_key,
     coverImageUrl: makePublicImageUrl(request, entry.cover_image_key),
     createdAt: entry.created_at,
     updatedAt: entry.updated_at,
@@ -1328,6 +1331,7 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
       <main class="shell">
         <form id="entryForm" class="admin-layout" enctype="multipart/form-data">
           <input type="hidden" name="id" id="entryId" />
+          <input type="hidden" name="remove_image_key" id="removedImageKey" />
           <section class="admin-compose-detail">
             <div class="admin-compose-main">
               <article class="viewer admin-canvas" data-dropzone>
@@ -1394,6 +1398,7 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
       const noteField = document.getElementById('noteField');
       const publicField = document.getElementById('publicField');
       const entryIdField = document.getElementById('entryId');
+      const removedImageKeyField = document.getElementById('removedImageKey');
       const imagesField = document.getElementById('imagesField');
       const canvasPreviewImage = document.getElementById('canvasPreviewImage');
       const canvasEmptyState = document.getElementById('canvasEmptyState');
@@ -1449,6 +1454,28 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
         categoryField.value = currentValue;
       }
 
+      function setRemovedImageKey(key) {
+        if (removedImageKeyField instanceof HTMLInputElement) {
+          removedImageKeyField.value = key || '';
+        }
+      }
+
+      function getRemovedImageKey() {
+        return removedImageKeyField instanceof HTMLInputElement ? removedImageKeyField.value.trim() : '';
+      }
+
+      function renderCanvasForCurrentState() {
+        if (selectedFiles.length > 0) {
+          showSelectedFiles(selectedFiles);
+          return;
+        }
+        if (selectedEntryDetail && !getRemovedImageKey()) {
+          showDetailCanvas(selectedEntryDetail);
+          return;
+        }
+        setBlankCanvas();
+      }
+
       function showDetailCanvas(detail) {
         revokePreviewObjectUrl();
         if (canvasPreviewImage instanceof HTMLImageElement) {
@@ -1489,6 +1516,7 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
       function resetToCurrentEntry() {
         selectedFiles = [];
         imagesField.value = '';
+        setRemovedImageKey('');
         if (selectedEntryDetail) {
           entryIdField.value = selectedEntryDetail.id;
           titleField.value = selectedEntryDetail.title;
@@ -1524,6 +1552,7 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
         selectedEntryId = detail.id;
         selectedEntryDetail = detail;
         entryIdField.value = detail.id;
+        setRemovedImageKey('');
         titleField.value = detail.title;
         ensureCategoryOption(detail.category);
         tagsField.value = (detail.tags || []).join(', ');
@@ -1552,13 +1581,24 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
         imagesField?.click();
       });
       clearImagesButton?.addEventListener('click', () => {
-        selectedFiles = [];
-        imagesField.value = '';
-        if (selectedEntryDetail) {
-          showDetailCanvas(selectedEntryDetail);
-        } else {
-          setBlankCanvas();
+        if (selectedFiles.length > 0) {
+          selectedFiles = [];
+          imagesField.value = '';
+          renderCanvasForCurrentState();
+          return;
         }
+        if (selectedEntryDetail) {
+          const removedKey = getRemovedImageKey();
+          if (removedKey) {
+            setRemovedImageKey('');
+            showDetailCanvas(selectedEntryDetail);
+          } else {
+            setRemovedImageKey(selectedEntryDetail.coverImageKey || '');
+            setBlankCanvas();
+          }
+          return;
+        }
+        setBlankCanvas();
       });
       imagesField?.addEventListener('change', () => {
         showSelectedFiles(imagesField.files ? Array.from(imagesField.files) : []);
@@ -1591,6 +1631,10 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
           const formData = new FormData(form);
           if (!publicField.checked) {
             formData.delete('is_public');
+          }
+          const removedImageKey = getRemovedImageKey();
+          if (!removedImageKey) {
+            formData.delete('remove_image_key');
           }
           formData.delete('images');
           selectedFiles.forEach((file) => {
@@ -1654,6 +1698,7 @@ async function deleteEntryImages(env: Env, imageKeys: string[]): Promise<void> {
 async function handleCreateOrUpdateEntry(request: Request, env: Env): Promise<Response> {
   const form = await request.formData();
   const entryId = getFormText(form, "id");
+  const removeImageKey = getFormText(form, "remove_image_key");
   const title = getFormText(form, "title");
   const prompt = getFormText(form, "prompt");
   const note = getFormText(form, "note");
@@ -1688,10 +1733,9 @@ async function handleCreateOrUpdateEntry(request: Request, env: Env): Promise<Re
   let uploadedKeys: string[] = [];
 
   try {
-    const images = files.length ? await uploadImages(env, id, files, entryId ? await getNextSortOrder(env, id) : 0) : [];
-    uploadedKeys = images.map((image) => image.imageKey);
-
     if (!entryId) {
+      const images = files.length ? await uploadImages(env, id, files, 0) : [];
+      uploadedKeys = images.map((image) => image.imageKey);
       const coverKey = images[0]?.imageKey;
       if (!coverKey) {
         return Response.json({ error: "Cover image is required." }, { status: 400 });
@@ -1721,17 +1765,66 @@ async function handleCreateOrUpdateEntry(request: Request, env: Env): Promise<Re
       return Response.json({ ok: true, mode: "create", id });
     }
 
+    const existingImages = await env.image_prompt_wall_db
+      .prepare(
+        `
+        SELECT id, image_key, sort_order
+        FROM entry_images
+        WHERE entry_id = ?
+        ORDER BY sort_order ASC, created_at ASC
+        `,
+      )
+      .bind(id)
+      .all<{ id: string; image_key: string; sort_order: number }>();
+
+    const removeTarget = removeImageKey
+      ? existingImages.results.find((image) => image.image_key === removeImageKey)
+      : null;
+
+    if (removeImageKey && !removeTarget) {
+      return Response.json({ error: "Image not found." }, { status: 404 });
+    }
+
+    const remainingImages = removeTarget
+      ? existingImages.results.filter((image) => image.image_key !== removeTarget.image_key)
+      : existingImages.results;
+
+    if (remainingImages.length === 0 && files.length === 0) {
+      return Response.json({ error: "At least one image is required." }, { status: 400 });
+    }
+
+    if (removeTarget) {
+      // Delete the image row inside the same commit path as the entry update.
+    }
+
+    const startSortOrder = remainingImages.reduce((max, image) => Math.max(max, Number(image.sort_order)), -1) + 1;
+    const images = files.length ? await uploadImages(env, id, files, startSortOrder) : [];
+    uploadedKeys = images.map((image) => image.imageKey);
+
+    const coverKey = remainingImages[0]?.image_key || images[0]?.imageKey;
+
+    if (!coverKey) {
+      return Response.json({ error: "At least one image is required." }, { status: 400 });
+    }
+
     await env.image_prompt_wall_db
       .batch([
+        ...(removeTarget
+          ? [
+              env.image_prompt_wall_db
+                .prepare("DELETE FROM entry_images WHERE entry_id = ? AND image_key = ?")
+                .bind(id, removeTarget.image_key),
+            ]
+          : []),
         env.image_prompt_wall_db
           .prepare(
             `
             UPDATE entries
-            SET title = ?, prompt = ?, prompt_note = ?, category = ?, tags_json = ?, is_public = ?, updated_at = ?
+            SET title = ?, prompt = ?, prompt_note = ?, category = ?, tags_json = ?, cover_image_key = ?, is_public = ?, updated_at = ?
             WHERE id = ?
             `,
           )
-          .bind(title, prompt, note, category, JSON.stringify(tags), isPublic, now, id),
+          .bind(title, prompt, note, category, JSON.stringify(tags), coverKey, isPublic, now, id),
         ...images.map((image) =>
           env.image_prompt_wall_db
             .prepare(
@@ -1743,6 +1836,10 @@ async function handleCreateOrUpdateEntry(request: Request, env: Env): Promise<Re
             .bind(image.id, id, image.imageKey, image.sortOrder, now),
         ),
       ]);
+
+    if (removeTarget) {
+      await deleteEntryImages(env, [removeTarget.image_key]);
+    }
 
     return Response.json({ ok: true, mode: "update", id });
   } catch (error) {
