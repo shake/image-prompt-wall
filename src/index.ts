@@ -397,6 +397,12 @@ function makePublicImageUrl(request: Request, imageKey: string): string {
   return new URL(`/media/${encodeURIComponent(imageKey)}`, request.url).toString();
 }
 
+function hasAdminSession(request: Request): boolean {
+  if (request.headers.get("cf-access-jwt-assertion")) return true;
+  const cookie = request.headers.get("cookie") || "";
+  return /(?:^|;\s*)CF_Authorization=/.test(cookie);
+}
+
 function buildSharedScript(): string {
   return `(() => {
     const themeKey = ${JSON.stringify(THEME_COOKIE)};
@@ -1196,6 +1202,7 @@ function renderHomePage(request: Request, lang: Lang, theme: Theme, entries: Ent
 
 function renderDetailPage(request: Request, lang: Lang, theme: Theme, entry: EntryDetail, adminMode = false): string {
   const copy = ui(lang);
+  const canEdit = adminMode || hasAdminSession(request);
   const visibleImages = [
     { id: `${entry.id}-cover`, url: entry.coverImageUrl, sortOrder: 0 },
     ...entry.images.filter((image) => image.url !== entry.coverImageUrl),
@@ -1235,7 +1242,7 @@ function renderDetailPage(request: Request, lang: Lang, theme: Theme, entry: Ent
               </div>
               ${metaTags ? `<div class="image-tags">${metaTags}</div>` : ""}
             </div>
-            ${adminMode ? `<div class="admin-detail-actions"><a class="button secondary" href="/admin">${htmlEscape(lang === "zh" ? "返回后台" : "Back to admin")}</a><button class="button" type="button" data-admin-edit>${iconEdit()}<span>${htmlEscape(copy.edit)}</span></button></div>` : ""}
+            ${canEdit ? `<div class="admin-detail-actions">${adminMode ? `<a class="button secondary" href="/admin">${htmlEscape(lang === "zh" ? "返回后台" : "Back to admin")}</a>` : ""}<button class="button" type="button" data-admin-edit>${iconEdit()}<span>${htmlEscape(copy.edit)}</span></button></div>` : ""}
           </article>
           <aside class="panel">
             <div class="section">
@@ -1266,7 +1273,7 @@ function renderDetailPage(request: Request, lang: Lang, theme: Theme, entry: Ent
       const openOriginalButton = document.querySelector('[data-open-original]');
       const closeModalButton = document.querySelector('[data-close-modal]');
       const adminEditButton = document.querySelector('[data-admin-edit]');
-      const adminEditUrl = ${adminMode ? JSON.stringify(`/admin?edit=${encodeURIComponent(entry.id)}`) : 'null'};
+      const adminEditUrl = ${canEdit ? JSON.stringify(`/admin?edit=${encodeURIComponent(entry.id)}`) : 'null'};
 
       const openModal = () => {
         if (!modal || !modalImage || !mainImage) return;
