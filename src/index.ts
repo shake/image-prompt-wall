@@ -1236,6 +1236,7 @@ function renderDetailPage(request: Request, lang: Lang, theme: Theme, entry: Ent
             <div class="viewer-actions">
               <button class="icon-action buttonless" type="button" data-open-original aria-label="${htmlEscape(copy.viewOriginal)}">${iconOpen()}</button>
               <a class="icon-action" href="${htmlEscape(visibleImages[0]?.url || entry.coverImageUrl)}" download aria-label="${htmlEscape(copy.download)}">${iconDownload()}</a>
+              ${canEdit ? `<a class="icon-action" href="/admin?edit=${encodeURIComponent(entry.id)}" aria-label="${htmlEscape(lang === "zh" ? "上传图片" : "Upload image")}">${iconUpload()}</a>` : ""}
             </div>
             <div class="image-caption">
               <div class="image-title">${htmlEscape(entry.title)}</div>
