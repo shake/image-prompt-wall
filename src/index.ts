@@ -1606,7 +1606,7 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
           }
           status.textContent = payload.mode === 'update' ? ${JSON.stringify(copy.saved)} : ${JSON.stringify(createdLabel)};
           if (payload.id) {
-            await loadEntryForEdit(payload.id);
+            window.location.href = '/admin/entry/' + encodeURIComponent(payload.id);
           }
         } catch (error) {
           status.textContent = error instanceof Error ? error.message : ${JSON.stringify(lang === "zh" ? "保存失败" : "Save failed.")};
