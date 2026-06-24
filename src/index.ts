@@ -7,6 +7,7 @@ const GITHUB_URL = "https://github.com/shake/image-prompt-wall";
 const THEME_COOKIE = "ipw_theme";
 const LANG_COOKIE = "ipw_lang";
 const THEME_OPTIONS = ["paper", "warm", "dark"] as const;
+const MAX_IMAGES_PER_ENTRY = 2;
 type Theme = (typeof THEME_OPTIONS)[number];
 type Lang = "en" | "zh";
 const DEFAULT_CATEGORIES = [
@@ -53,6 +54,7 @@ type EntryDetail = {
   updatedAt: string;
   isPublic: boolean;
   images: Array<{
+    key: string;
     id: string;
     url: string;
     sortOrder: number;
@@ -392,6 +394,14 @@ function iconUpload(): string {
   return `<svg viewBox="0 0 1024 1024" aria-hidden="true" width="18" height="18" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M512 96a32 32 0 0 1 32 32v352.96l99.2-99.2a32 32 0 1 1 45.248 45.248l-153.6 153.6a32 32 0 0 1-45.248 0l-153.6-153.6a32 32 0 0 1 45.248-45.248l99.2 99.2V128a32 32 0 0 1 32-32zM192 544a32 32 0 0 1 32 32v224h576V576a32 32 0 0 1 64 0v256a32 32 0 0 1-32 32H160a32 32 0 0 1-32-32V576a32 32 0 0 1 32-32z"/></svg>`;
 }
 
+function iconChevronLeft(): string {
+  return `<svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M15 6 9 12l6 6"/></svg>`;
+}
+
+function iconChevronRight(): string {
+  return `<svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="m9 6 6 6-6 6"/></svg>`;
+}
+
 function themeIcon(theme: Theme): string {
   if (theme === "paper") return iconPaper();
   if (theme === "warm") return iconSun();
@@ -400,6 +410,18 @@ function themeIcon(theme: Theme): string {
 
 function makePublicImageUrl(request: Request, imageKey: string): string {
   return new URL(`/media/${encodeURIComponent(imageKey)}`, request.url).toString();
+}
+
+function getDisplayImages(entry: EntryDetail): EntryDetail["images"] {
+  const images: EntryDetail["images"] = [
+    { key: entry.coverImageKey, id: `${entry.id}-cover`, url: entry.coverImageUrl, sortOrder: 0 },
+  ];
+  for (const image of entry.images) {
+    if (images.some((item) => item.key === image.key || item.url === image.url)) continue;
+    images.push(image);
+    if (images.length >= MAX_IMAGES_PER_ENTRY) break;
+  }
+  return images.slice(0, MAX_IMAGES_PER_ENTRY);
 }
 
 function hasAdminSession(request: Request): boolean {
@@ -711,6 +733,18 @@ function renderPage(options: {
         box-shadow: 0 1px 0 rgba(255,255,255,0.24), 0 18px 40px rgba(0,0,0,0.06);
         cursor: zoom-in;
       }
+      .viewer-nav {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 2;
+        width: 46px;
+        height: 46px;
+        background: color-mix(in srgb, var(--panel-strong) 88%, var(--bg) 12%);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+      }
+      .viewer-nav-prev { left: 30px; }
+      .viewer-nav-next { right: 30px; }
       .viewer-actions {
         display: flex;
         gap: 10px;
@@ -1082,21 +1116,14 @@ async function loadEntries(
     .bind(...binds)
     .all<EntryRow>();
 
-  return result.results.map((row) => ({
-    id: row.id,
-    title: row.title,
-    prompt: row.prompt,
-    note: row.prompt_note,
-    category: row.category,
-    tags: parseTags(row.tags_json),
-    coverImageKey: row.cover_image_key,
-    coverImageUrl: makePublicImageUrl(request, row.cover_image_key),
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
-    isPublic: row.is_public === 1,
-    images: [],
-    imageCount: Number(row.image_count || 0),
-  }));
+  const details = await Promise.all(
+    result.results.map(async (row) => {
+      const detail = await loadEntryDetail(env, request, row.id, options.admin);
+      return detail ? { ...detail, imageCount: detail.images.length } : null;
+    }),
+  );
+
+  return details.filter((detail): detail is EntryListItem => Boolean(detail));
 }
 
 async function loadEntryDetail(
@@ -1144,6 +1171,7 @@ async function loadEntryDetail(
     updatedAt: entry.updated_at,
     isPublic: entry.is_public === 1,
     images: images.results.map((image) => ({
+      key: image.image_key,
       id: image.id,
       url: makePublicImageUrl(request, image.image_key),
       sortOrder: image.sort_order,
@@ -1155,16 +1183,19 @@ function renderHomePage(request: Request, lang: Lang, theme: Theme, entries: Ent
   const copy = ui(lang);
   const cards = entries.length
     ? entries
-        .map(
-          (entry) => `
-            <a class="card" href="/entry/${encodeURIComponent(entry.id)}">
-              <img src="${htmlEscape(entry.coverImageUrl)}" alt="${attrEscape(entry.title)}" loading="lazy" />
+        .flatMap((entry) =>
+          getDisplayImages(entry).map(
+            (image, index) => `
+            <a class="card" href="/entry/${encodeURIComponent(entry.id)}?image=${index}">
+              <img src="${htmlEscape(image.url)}" alt="${attrEscape(entry.title)}" loading="lazy" />
               <div class="card-title">${htmlEscape(truncate(entry.title, 54))}</div>
             </a>
           `,
+          ),
         )
         .join("")
     : `<div class="empty">${htmlEscape(copy.emptyState)}</div>`;
+  const cardCount = entries.reduce((total, entry) => total + getDisplayImages(entry).length, 0);
 
   const categoryOptions = ["all", ...DEFAULT_CATEGORIES, ...categories]
     .filter((value, index, array) => array.indexOf(value) === index)
@@ -1197,7 +1228,7 @@ function renderHomePage(request: Request, lang: Lang, theme: Theme, entries: Ent
             </select>
             <button class="button" type="submit">${htmlEscape(copy.search)}</button>
           </form>
-          <div class="count">${htmlEscape(formatCount(lang, entries.length))}</div>
+          <div class="count">${htmlEscape(formatCount(lang, cardCount))}</div>
         </section>
         <section class="hero" style="padding-top: 0;">${categoryPills}</section>
         <section class="cards">${cards}</section>
@@ -1207,13 +1238,12 @@ function renderHomePage(request: Request, lang: Lang, theme: Theme, entries: Ent
   });
 }
 
-function renderDetailPage(request: Request, lang: Lang, theme: Theme, entry: EntryDetail, adminMode = false): string {
+function renderDetailPage(request: Request, lang: Lang, theme: Theme, entry: EntryDetail, adminMode = false, initialImageIndex = 0): string {
   const copy = ui(lang);
   const canEdit = adminMode || hasAdminSession(request);
-  const visibleImages = [
-    { id: `${entry.id}-cover`, url: entry.coverImageUrl, sortOrder: 0 },
-    ...entry.images.filter((image) => image.url !== entry.coverImageUrl),
-  ];
+  const visibleImages = getDisplayImages(entry);
+  const currentImageIndex = Math.min(Math.max(Number(initialImageIndex) || 0, 0), Math.max(visibleImages.length - 1, 0));
+  const currentImage = visibleImages[currentImageIndex] || visibleImages[0];
 
   const tags = entry.tags
     .map((tag) => `<span class="chip">${htmlEscape(tag)}</span>`)
@@ -1232,11 +1262,13 @@ function renderDetailPage(request: Request, lang: Lang, theme: Theme, entry: Ent
       <main class="shell">
         <section class="detail">
           <article class="viewer">
-            <img id="mainImage" class="main-image" src="${htmlEscape(visibleImages[0]?.url || entry.coverImageUrl)}" alt="${attrEscape(entry.title)}" />
+            ${visibleImages.length > 1 ? `<button class="icon-action buttonless viewer-nav viewer-nav-prev" type="button" data-prev-image aria-label="${htmlEscape(lang === "zh" ? "上一张图片" : "Previous image")}">${iconChevronLeft()}</button>` : ""}
+            <img id="mainImage" class="main-image" src="${htmlEscape(currentImage?.url || entry.coverImageUrl)}" alt="${attrEscape(entry.title)}" />
+            ${visibleImages.length > 1 ? `<button class="icon-action buttonless viewer-nav viewer-nav-next" type="button" data-next-image aria-label="${htmlEscape(lang === "zh" ? "下一张图片" : "Next image")}">${iconChevronRight()}</button>` : ""}
             <div class="viewer-actions">
               <button class="icon-action buttonless" type="button" data-open-original aria-label="${htmlEscape(copy.viewOriginal)}">${iconOpen()}</button>
-              <a class="icon-action" href="${htmlEscape(visibleImages[0]?.url || entry.coverImageUrl)}" download aria-label="${htmlEscape(copy.download)}">${iconDownload()}</a>
-              ${canEdit ? `<a class="icon-action" href="/admin?edit=${encodeURIComponent(entry.id)}" aria-label="${htmlEscape(lang === "zh" ? "上传图片" : "Upload image")}">${iconUpload()}</a>` : ""}
+              <a class="icon-action" data-download-image href="${htmlEscape(currentImage?.url || entry.coverImageUrl)}" download aria-label="${htmlEscape(copy.download)}">${iconDownload()}</a>
+              ${canEdit ? `<a class="icon-action" data-upload-image-link href="/admin?edit=${encodeURIComponent(entry.id)}&image=${currentImageIndex}" aria-label="${htmlEscape(lang === "zh" ? "上传图片" : "Upload image")}">${iconUpload()}</a>` : ""}
             </div>
             <div class="image-caption">
               <div class="image-title">${htmlEscape(entry.title)}</div>
@@ -1273,7 +1305,7 @@ function renderDetailPage(request: Request, lang: Lang, theme: Theme, entry: Ent
       <div class="modal" data-image-modal hidden>
         <div class="modal-card" role="dialog" aria-modal="true" aria-label="${htmlEscape(copy.viewOriginal)}">
           <button class="modal-close" type="button" data-close-modal aria-label="${htmlEscape(copy.close)}">${iconClose()}</button>
-          <img class="modal-image" data-modal-image src="${htmlEscape(visibleImages[0]?.url || entry.coverImageUrl)}" alt="${attrEscape(entry.title)}" />
+          <img class="modal-image" data-modal-image src="${htmlEscape(currentImage?.url || entry.coverImageUrl)}" alt="${attrEscape(entry.title)}" />
         </div>
       </div>
     `,
@@ -1283,8 +1315,38 @@ function renderDetailPage(request: Request, lang: Lang, theme: Theme, entry: Ent
       const modalImage = document.querySelector('[data-modal-image]');
       const openOriginalButton = document.querySelector('[data-open-original]');
       const closeModalButton = document.querySelector('[data-close-modal]');
+      const prevImageButton = document.querySelector('[data-prev-image]');
+      const nextImageButton = document.querySelector('[data-next-image]');
+      const downloadImageButton = document.querySelector('[data-download-image]');
+      const uploadImageLink = document.querySelector('[data-upload-image-link]');
       const adminEditButton = document.querySelector('[data-admin-edit]');
+      const detailImages = ${JSON.stringify(visibleImages)};
+      let currentImageIndex = ${currentImageIndex};
       const adminEditUrl = ${canEdit ? JSON.stringify(`/admin?edit=${encodeURIComponent(entry.id)}`) : 'null'};
+
+      const clampIndex = (value) => {
+        if (!detailImages.length) return 0;
+        return Math.min(Math.max(Number(value) || 0, 0), detailImages.length - 1);
+      };
+
+      const syncCurrentImage = () => {
+        currentImageIndex = clampIndex(currentImageIndex);
+        const currentImage = detailImages[currentImageIndex] || detailImages[0];
+        if (!currentImage || !mainImage) return;
+        mainImage.src = currentImage.url;
+        if (downloadImageButton instanceof HTMLAnchorElement) {
+          downloadImageButton.href = currentImage.url;
+        }
+        ${canEdit ? `if (uploadImageLink instanceof HTMLAnchorElement) {
+          uploadImageLink.href = ${JSON.stringify(`/admin?edit=${encodeURIComponent(entry.id)}`)} + '?image=' + currentImageIndex;
+        }` : ""}
+        if (modalImage instanceof HTMLImageElement) {
+          modalImage.src = currentImage.url;
+        }
+        const url = new URL(window.location.href);
+        url.searchParams.set('image', String(currentImageIndex));
+        window.history.replaceState({}, '', url);
+      };
 
       const openModal = () => {
         if (!modal || !modalImage || !mainImage) return;
@@ -1298,8 +1360,18 @@ function renderDetailPage(request: Request, lang: Lang, theme: Theme, entry: Ent
       };
 
       openOriginalButton?.addEventListener('click', openModal);
+      prevImageButton?.addEventListener('click', () => {
+        if (detailImages.length < 2) return;
+        currentImageIndex = (currentImageIndex - 1 + detailImages.length) % detailImages.length;
+        syncCurrentImage();
+      });
+      nextImageButton?.addEventListener('click', () => {
+        if (detailImages.length < 2) return;
+        currentImageIndex = (currentImageIndex + 1) % detailImages.length;
+        syncCurrentImage();
+      });
       adminEditButton?.addEventListener('click', () => {
-        if (adminEditUrl) window.location.href = adminEditUrl;
+        if (adminEditUrl) window.location.href = adminEditUrl + '?image=' + currentImageIndex;
       });
       closeModalButton?.addEventListener('click', closeModal);
       modal?.addEventListener('click', (event) => {
@@ -1308,6 +1380,7 @@ function renderDetailPage(request: Request, lang: Lang, theme: Theme, entry: Ent
       document.addEventListener('keydown', (event) => {
         if (event.key === 'Escape') closeModal();
       });
+      syncCurrentImage();
       const promptText = document.getElementById('promptText');
       document.querySelector('[data-copy-prompt]')?.addEventListener('click', async () => {
         await navigator.clipboard.writeText(promptText?.textContent || ${JSON.stringify(entry.prompt)});
@@ -1340,6 +1413,8 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
           <section class="admin-compose-detail">
             <div class="admin-compose-main">
               <article class="viewer admin-canvas" data-dropzone>
+                <button class="icon-action buttonless viewer-nav viewer-nav-prev" type="button" id="canvasPrevButton" hidden aria-label="${htmlEscape(lang === "zh" ? "上一张图片" : "Previous image")}">${iconChevronLeft()}</button>
+                <button class="icon-action buttonless viewer-nav viewer-nav-next" type="button" id="canvasNextButton" hidden aria-label="${htmlEscape(lang === "zh" ? "下一张图片" : "Next image")}">${iconChevronRight()}</button>
                 <img id="canvasPreviewImage" class="main-image" alt="" hidden />
                 <div class="admin-canvas-actions viewer-actions">
                   <button class="icon-action buttonless" type="button" id="uploadIconButton" aria-label="${htmlEscape(uploadLabel)}">${iconUpload()}</button>
@@ -1411,12 +1486,15 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
       const uploadTrigger = document.getElementById('uploadTrigger');
       const uploadIconButton = document.getElementById('uploadIconButton');
       const clearImagesButton = document.getElementById('clearImagesButton');
+      const canvasPrevButton = document.getElementById('canvasPrevButton');
+      const canvasNextButton = document.getElementById('canvasNextButton');
       const dropzone = document.querySelector('[data-dropzone]');
       let selectedEntryId = '';
       let selectedEntryDetail = null;
       let selectedFiles = [];
       let removalStaged = false;
       let previewObjectUrl = '';
+      let currentImageIndex = Number(new URLSearchParams(window.location.search).get('image') || 0);
 
       function setCanvasBadge(text) {
         if (!(canvasCountBadge instanceof HTMLElement)) return;
@@ -1429,6 +1507,54 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
         clearImagesButton.innerHTML = removalStaged ? ${JSON.stringify(iconRestore())} : ${JSON.stringify(iconClose())};
         clearImagesButton.setAttribute('aria-label', removalStaged ? ${JSON.stringify(lang === "zh" ? "恢复图片" : "Restore image")} : ${JSON.stringify(copy.clear)});
         clearImagesButton.title = removalStaged ? ${JSON.stringify(lang === "zh" ? "恢复图片" : "Restore image")} : ${JSON.stringify(copy.clear)};
+      }
+
+      function getSelectedImages() {
+        if (!selectedEntryDetail) return [];
+        const images = [
+          { key: selectedEntryDetail.coverImageKey, id: selectedEntryDetail.id + '-cover', url: selectedEntryDetail.coverImageUrl, sortOrder: 0 },
+        ];
+        for (const image of selectedEntryDetail.images || []) {
+          if (images.some((item) => item.key === image.key || item.url === image.url)) continue;
+          images.push(image);
+          if (images.length >= ${MAX_IMAGES_PER_ENTRY}) break;
+        }
+        return images.slice(0, ${MAX_IMAGES_PER_ENTRY});
+      }
+
+      function clampImageIndex(index, length) {
+        if (!length) return 0;
+        return Math.min(Math.max(Number(index) || 0, 0), length - 1);
+      }
+
+      function updateCanvasNavigation() {
+        const images = getSelectedImages();
+        const canNavigate = !removalStaged && images.length > 1 && selectedFiles.length === 0;
+        if (canvasPrevButton instanceof HTMLButtonElement) {
+          canvasPrevButton.hidden = !canNavigate;
+        }
+        if (canvasNextButton instanceof HTMLButtonElement) {
+          canvasNextButton.hidden = !canNavigate;
+        }
+      }
+
+      function syncCanvasImage() {
+        const images = getSelectedImages();
+        if (!images.length) {
+          updateCanvasNavigation();
+          return;
+        }
+        currentImageIndex = clampImageIndex(currentImageIndex, images.length);
+        const image = images[currentImageIndex] || images[0];
+        if (canvasPreviewImage instanceof HTMLImageElement) {
+          canvasPreviewImage.src = image.url;
+          canvasPreviewImage.alt = selectedEntryDetail?.title || ${JSON.stringify(emptyCanvasLabel)};
+          canvasPreviewImage.hidden = false;
+        }
+        if (canvasEmptyState instanceof HTMLElement) {
+          canvasEmptyState.hidden = true;
+        }
+        updateCanvasNavigation();
       }
 
       function revokePreviewObjectUrl() {
@@ -1452,6 +1578,7 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
         if (dropzone instanceof HTMLElement) {
           dropzone.classList.remove('dragover');
         }
+        updateCanvasNavigation();
       }
 
       function updateCanvasHint() {
@@ -1468,7 +1595,7 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
           return;
         }
         if (selectedEntryDetail) {
-          setCanvasBadge((selectedEntryDetail.images.length || 1) + ' ${lang === "zh" ? "张图" : "images"}');
+          setCanvasBadge((getSelectedImages().length || 1) + ' ${lang === "zh" ? "张图" : "images"}');
           return;
         }
         setCanvasBadge('');
@@ -1512,24 +1639,33 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
 
       function showDetailCanvas(detail) {
         revokePreviewObjectUrl();
-        if (canvasPreviewImage instanceof HTMLImageElement) {
-          canvasPreviewImage.src = detail.coverImageUrl;
-          canvasPreviewImage.alt = detail.title;
-          canvasPreviewImage.hidden = false;
-        }
-        if (canvasEmptyState instanceof HTMLElement) {
-          canvasEmptyState.hidden = true;
-        }
+        currentImageIndex = clampImageIndex(currentImageIndex, getSelectedImages().length || 1);
+        syncCanvasImage();
         updateCanvasHint();
       }
 
       function showSelectedFiles(files) {
-        selectedFiles = Array.from(files || []);
+        const nextFiles = Array.from(files || []);
+        const activeCount = selectedEntryDetail ? Math.max(getSelectedImages().length - (removalStaged ? 1 : 0), 0) : 0;
+        const remainingSlots = ${MAX_IMAGES_PER_ENTRY} - activeCount;
+        if (nextFiles.length > remainingSlots) {
+          selectedFiles = [];
+          imagesField.value = '';
+          status.textContent = ${JSON.stringify(lang === "zh" ? "最多只能保留 2 张图片。请先删除一张再添加。" : "You can keep at most 2 images. Delete one first, then add another.")};
+          if (selectedEntryDetail && !removalStaged) {
+            syncCanvasImage();
+          } else {
+            setBlankCanvas();
+          }
+          updateCanvasHint();
+          return;
+        }
+        selectedFiles = nextFiles;
         imagesField.value = '';
         revokePreviewObjectUrl();
         if (!selectedFiles.length) {
           if (selectedEntryDetail) {
-            showDetailCanvas(selectedEntryDetail);
+            syncCanvasImage();
           } else {
             setBlankCanvas();
           }
@@ -1544,6 +1680,7 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
         if (canvasEmptyState instanceof HTMLElement) {
           canvasEmptyState.hidden = true;
         }
+        updateCanvasNavigation();
         updateCanvasHint();
       }
 
@@ -1591,6 +1728,7 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
         removalStaged = false;
         setRemovedImageKey('');
         updateClearButton();
+        currentImageIndex = clampImageIndex(currentImageIndex, getSelectedImages().length || 1);
         titleField.value = detail.title;
         ensureCategoryOption(detail.category);
         tagsField.value = (detail.tags || []).join(', ');
@@ -1618,6 +1756,20 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
       uploadIconButton?.addEventListener('click', () => {
         imagesField?.click();
       });
+      canvasPrevButton?.addEventListener('click', () => {
+        const images = getSelectedImages();
+        if (images.length < 2 || selectedFiles.length > 0) return;
+        currentImageIndex = (currentImageIndex - 1 + images.length) % images.length;
+        syncCanvasImage();
+        updateCanvasHint();
+      });
+      canvasNextButton?.addEventListener('click', () => {
+        const images = getSelectedImages();
+        if (images.length < 2 || selectedFiles.length > 0) return;
+        currentImageIndex = (currentImageIndex + 1) % images.length;
+        syncCanvasImage();
+        updateCanvasHint();
+      });
       clearImagesButton?.addEventListener('click', () => {
         if (selectedFiles.length > 0) {
           selectedFiles = [];
@@ -1634,7 +1786,8 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
             showDetailCanvas(selectedEntryDetail);
           } else {
             removalStaged = true;
-            setRemovedImageKey(selectedEntryDetail.coverImageKey || '');
+            const currentImage = getSelectedImages()[currentImageIndex] || getSelectedImages()[0];
+            setRemovedImageKey(currentImage?.key || selectedEntryDetail.coverImageKey || '');
             updateClearButton();
             setBlankCanvas();
             updateCanvasHint();
@@ -1760,6 +1913,10 @@ async function handleCreateOrUpdateEntry(request: Request, env: Env): Promise<Re
     return Response.json({ error: "At least one image is required for a new entry." }, { status: 400 });
   }
 
+  if (files.length > MAX_IMAGES_PER_ENTRY) {
+    return Response.json({ error: `At most ${MAX_IMAGES_PER_ENTRY} images are allowed.` }, { status: 400 });
+  }
+
   const existing = entryId
     ? await env.image_prompt_wall_db
         .prepare("SELECT id, cover_image_key FROM entries WHERE id = ? LIMIT 1")
@@ -1831,6 +1988,10 @@ async function handleCreateOrUpdateEntry(request: Request, env: Env): Promise<Re
     const remainingImages = removeTarget
       ? existingImages.results.filter((image) => image.image_key !== removeTarget.image_key)
       : existingImages.results;
+
+    if (remainingImages.length + files.length > MAX_IMAGES_PER_ENTRY) {
+      return Response.json({ error: `At most ${MAX_IMAGES_PER_ENTRY} images are allowed.` }, { status: 400 });
+    }
 
     if (remainingImages.length === 0 && files.length === 0) {
       return Response.json({ error: "At least one image is required." }, { status: 400 });
@@ -1985,9 +2146,10 @@ export default {
 
       if (pathname.startsWith("/admin/entry/")) {
         const id = decodeURIComponent(pathname.slice("/admin/entry/".length).replace(/\/$/, ""));
+        const image = Number(url.searchParams.get("image") || 0);
         const entry = await loadEntryDetail(env, request, id, true);
         if (!entry) return new Response("Not found", { status: 404 });
-        return new Response(renderDetailPage(request, lang, theme, entry, true), {
+        return new Response(renderDetailPage(request, lang, theme, entry, true, image), {
           headers: { "content-type": "text/html; charset=utf-8" },
         });
       }
@@ -2001,9 +2163,10 @@ export default {
 
       if (pathname.startsWith("/entry/")) {
         const id = decodeURIComponent(pathname.slice("/entry/".length));
+        const image = Number(url.searchParams.get("image") || 0);
         const entry = await loadEntryDetail(env, request, id, false);
         if (!entry) return new Response("Not found", { status: 404 });
-        return new Response(renderDetailPage(request, lang, theme, entry), {
+        return new Response(renderDetailPage(request, lang, theme, entry, false, image), {
           headers: { "content-type": "text/html; charset=utf-8" },
         });
       }
