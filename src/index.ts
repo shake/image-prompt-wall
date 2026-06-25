@@ -915,6 +915,12 @@ function renderPage(options: {
         top: 22px;
         right: 22px;
         z-index: 2;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 10px;
+        flex-wrap: nowrap;
+        margin: 0;
       }
       .admin-drop-empty {
         position: absolute;
@@ -1421,7 +1427,7 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
                 <button class="icon-action buttonless viewer-nav viewer-nav-prev" type="button" id="canvasPrevButton" hidden aria-label="${htmlEscape(lang === "zh" ? "上一张图片" : "Previous image")}">${iconChevronLeft()}</button>
                 <button class="icon-action buttonless viewer-nav viewer-nav-next" type="button" id="canvasNextButton" hidden aria-label="${htmlEscape(lang === "zh" ? "下一张图片" : "Next image")}">${iconChevronRight()}</button>
                 <img id="canvasPreviewImage" class="main-image" alt="" hidden />
-                <div class="admin-canvas-actions viewer-actions">
+                <div class="admin-canvas-actions">
                   <button class="icon-action buttonless" type="button" id="uploadTrigger" aria-label="${htmlEscape(uploadLabel)}">${iconUpload()}</button>
                   <a class="icon-action buttonless" id="downloadCurrentImageButton" hidden aria-label="${htmlEscape(copy.download)}" download>${iconDownload()}</a>
                   <button class="icon-action buttonless" type="button" id="clearImagesButton" aria-label="${htmlEscape(copy.clear)}">${iconClose()}</button>
