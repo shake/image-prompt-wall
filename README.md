@@ -1,14 +1,158 @@
 # Image Prompt Wall
 
-A personal wall for AI image prompts and generated images.
+一个专门收集、整理和回顾 AI 生图提示词的网站。
 
-Prompts worth keeping. Images worth revisiting.
+你可以把它理解成一面「提示词墙」：
+- 把常用 prompt 记下来
+- 把生成结果和 prompt 绑定保存
+- 把值得复用的灵感沉淀成自己的素材库
+- 需要时一键复制 prompt，再次生成
 
-## Vision
+它适合这些人：
+- 经常用 ChatGPT / GPT-4o / image-2 / 其他生图模型的人
+- 想系统保存 prompt、图片和标签的人
+- 想把灵感整理成可检索素材库的人
+- 想自己搭一个公开展示站，同时保留后台编辑能力的人
 
-- Public browsing only
-- Private upload area protected by Cloudflare Access
-- Image storage in R2
-- Metadata in D1
-- Home page: masonry card wall
-- Detail page: large image, prompt, and copy actions
+## 实现功能
+
+### 首页
+- 瀑布流卡片墙展示所有条目
+- 每张卡片只展示封面图、短标题、一级分类、少量 tags
+- 支持按标题、提示词、标签搜索
+- 支持按分类筛选
+- 支持中英文界面切换
+- 支持浅色、暖色、深色三种主题
+
+### 详情页
+- 左侧展示图片，右侧展示提示词
+- 图片底部展示标题、分类、标签
+- 支持复制提示词
+- 支持查看原图、下载图片
+- 管理员登录后，详情页会多出编辑入口
+
+### 后台
+- `/admin` 是空白创建页
+- 上传图片、填写标题、分类、标签、提示词、备注后即可发布
+- 管理员可以直接在详情页进入编辑状态
+- 支持最多 2 张图片
+- 两张图片地位平等
+- 允许删除其中一张，删除后也能恢复
+- 删除条目时会要求输入标题确认，避免误删
+- 后台不保留独立列表页，减少重复界面和维护成本
+
+### 图片管理
+- 图片存储在 R2
+- 图片元数据和条目数据存储在 D1
+- 图片上传、替换、删除都在同一条目内完成
+
+## 架构
+
+这个项目是一个 Cloudflare-native 应用，核心组件很轻：
+
+- **Cloudflare Workers**：负责页面渲染、API、后台操作、鉴权逻辑
+- **Cloudflare D1**：存储条目、标签、分类、提示词、备注、图片索引等元数据
+- **Cloudflare R2**：存储实际图片文件
+- **Cloudflare Access**：保护 `/admin` 和管理入口，只允许授权邮箱访问
+- **自定义域名**：通过 Worker Custom Domain 绑定到你的业务域名
+
+数据关系很简单：
+- `entries`：条目主表
+- `entry_images`：条目图片表
+- 删除条目时会连同相关图片索引一起清理
+
+这种结构的好处是：
+- 代码和部署都很轻
+- 公开浏览和后台管理可以共用同一套 Worker
+- 后续想加搜索、分类、备注、更多图片，都能直接在现有结构上扩展
+
+## 部署到 Cloudflare 需要哪些组件
+
+最小部署只需要这些：
+
+1. **一个 Worker**
+   - 承载整个网站
+   - 负责前台、后台和 API
+
+2. **一个 D1 数据库**
+   - 记录条目、分类、标签、提示词、备注、图片关系
+
+3. **一个 R2 Bucket**
+   - 存放上传的图片
+
+4. **一个 Worker Custom Domain**
+   - 例如 `image-prompt-wall.joakim.dpdns.org`
+   - 让用户通过你自己的域名访问
+
+5. **一个 Access 应用**
+   - 保护管理员入口
+   - 例如只允许 `shake.chen@gmail.com` 登录后台
+
+## 推荐部署流程
+
+如果你已经在 Cloudflare 上准备好了域名，推荐按这个顺序来：
+
+1. 创建 Worker 并部署代码
+2. 创建 D1 数据库并执行迁移
+3. 创建 R2 Bucket 并绑定到 Worker
+4. 给 Worker 配置 Custom Domain
+5. 给 `/admin` 配置 Cloudflare Access
+6. 访问站点，检查首页、详情页、后台上传、编辑、删除是否正常
+
+如果你想要一份更细的逐步操作说明，可以看这里：
+
+- [部署指南](./docs/DEPLOYMENT.zh-CN.md)
+- [Codex 部署检查清单](./docs/CODEX_CHECKLIST.zh-CN.md)
+
+## 本地开发
+
+```bash
+npm install
+npm run dev
+```
+
+## 数据库迁移
+
+```bash
+npm run d1:migrate
+```
+
+## 发布部署
+
+```bash
+npm run deploy
+```
+
+## 为什么值得用
+
+Image Prompt Wall 解决的是一个很实际的问题：
+
+- 平时看到很多 prompt，很容易散落在聊天记录、备忘录、截图里
+- 需要的时候找不到，或者找到后很难复用
+- 图片和 prompt 如果分离保存，很快就失去上下文
+- 纯文本笔记也不够直观，浏览体验不好
+
+这个项目把“提示词 + 图片 + 分类 + 标签 + 备注”放进一个统一界面里，适合长期积累自己的 AI 生图素材库。
+
+## 通过 Codex 继续维护
+
+如果你想继续迭代这个项目，推荐直接用 Codex 来做后续修改：
+
+- 让 Codex 根据你的需求直接改 UI 和交互
+- 让 Codex 帮你检查 D1 / R2 / Access / Custom Domain 配置
+- 让 Codex 帮你同步 GitHub 和 Cloudflare 的发布版本
+- 让 Codex 帮你把新的页面文案、图标和中文提示统一起来
+
+这种方式最适合这个项目，因为它的变化大多是「产品细节调整」，而不是大规模重构。
+
+## 访问方式
+
+- 公开站点：你的自定义域名
+- 管理后台：`/admin`
+- 管理权限：Cloudflare Access 里配置的授权邮箱
+
+## 项目目标
+
+这个项目不是要做成一个复杂的社区平台，而是先做好一件事：
+
+> 让你自己保存、回顾、复用和展示 prompt 的过程，变得简单、清楚、顺手。
