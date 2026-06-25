@@ -389,6 +389,10 @@ function iconEdit(): string {
   return `<svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M4 18.5V20h1.5l10.2-10.2-1.5-1.5L4 18.5Z"/><path d="m13.2 8.3 1.5 1.5"/><path d="M14 4.5h5.2a.8.8 0 0 1 .8.8v5.2"/><path d="M19.8 5.3 9.4 15.7"/></svg>`;
 }
 
+function iconTrash(): string {
+  return `<svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M3.8 6h16.4"/><path d="M9.5 6V4.8A1.3 1.3 0 0 1 10.8 3.5h2.4a1.3 1.3 0 0 1 1.3 1.3V6"/><path d="M8.2 6.2 9 19a1.3 1.3 0 0 0 1.3 1.2h3.4a1.3 1.3 0 0 0 1.3-1.2l.8-12.8"/><path d="M12 9.2v7.2M9.2 9.2l.3 7.2M14.8 9.2l-.3 7.2"/></svg>`;
+}
+
 function iconRestore(): string {
   return `<svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M6 12a6 6 0 1 1 2 4.46"/><path d="M6 16v-4h4"/><path d="M9 12h3.5"/></svg>`;
 }
@@ -780,6 +784,12 @@ function renderPage(options: {
         padding: 0;
         cursor: pointer;
       }
+      .icon-action.danger {
+        color: #c03b2d;
+      }
+      .icon-action.danger:hover {
+        background: color-mix(in srgb, #c03b2d 12%, var(--panel-strong));
+      }
       .image-caption {
         display: grid;
         gap: 8px;
@@ -854,6 +864,106 @@ function renderPage(options: {
         display: inline-flex;
         align-items: center;
         gap: 8px;
+      }
+      .admin-panel-heading {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      .admin-panel-heading h1 {
+        margin: 0;
+      }
+      .delete-modal-card {
+        width: min(92vw, 720px);
+        max-height: none;
+      }
+      .delete-modal-window {
+        position: relative;
+        width: 100%;
+        border-radius: 28px;
+        border: 1px solid var(--line);
+        background: var(--panel-strong);
+        box-shadow: var(--shadow);
+        padding: 26px;
+      }
+      .delete-modal-close {
+        position: absolute;
+        top: 14px;
+        right: 14px;
+      }
+      .delete-modal-hero {
+        display: grid;
+        justify-items: center;
+        gap: 14px;
+        padding: 16px 0 22px;
+        text-align: center;
+      }
+      .delete-modal-kicker {
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .delete-modal-title-row {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+      .delete-modal-title-row h2 {
+        margin: 0;
+        font-size: 28px;
+        line-height: 1.2;
+        letter-spacing: -0.03em;
+      }
+      .delete-modal-copy {
+        display: grid;
+        gap: 10px;
+        justify-items: center;
+      }
+      .delete-modal-icon {
+        display: grid;
+        place-items: center;
+        width: 56px;
+        height: 56px;
+        border-radius: 18px;
+        background: color-mix(in srgb, #c03b2d 12%, var(--panel));
+        color: #c03b2d;
+      }
+      .delete-modal-hint {
+        margin: 0;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.5;
+      }
+      .delete-modal-label {
+        display: grid;
+        gap: 8px;
+        margin-top: 8px;
+      }
+      .delete-modal-label span {
+        color: var(--muted);
+        font-size: 14px;
+        font-weight: 600;
+      }
+      .delete-modal-input {
+        width: 100%;
+      }
+      .delete-modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 18px;
+        flex-wrap: wrap;
+      }
+      .delete-modal-status {
+        min-height: 20px;
+        margin-top: 12px;
+        color: var(--muted);
+        font-size: 14px;
       }
       .modal {
         position: fixed;
@@ -1048,6 +1158,38 @@ function renderTopBar(active: "home" | "admin", lang: Lang, theme: Theme, title:
       </div>
     </div>
   </header>`;
+}
+
+function renderDeleteModal(copy: ReturnType<typeof ui>, lang: Lang): string {
+  return `
+      <div class="modal" data-delete-modal hidden>
+        <div class="modal-card delete-modal-card" role="dialog" aria-modal="true" aria-labelledby="deleteModalTitle">
+          <div class="delete-modal-window">
+            <button class="modal-close delete-modal-close" type="button" data-delete-modal-close aria-label="${htmlEscape(copy.close)}">${iconClose()}</button>
+            <div class="delete-modal-hero">
+              <div class="delete-modal-icon">${iconTrash()}</div>
+              <div class="delete-modal-copy">
+                <div class="delete-modal-kicker">${htmlEscape(copy.deletePrompt)}</div>
+                <div class="delete-modal-title-row">
+                  <h2 id="deleteModalTitle" data-delete-modal-entry-title></h2>
+                  <button class="icon-action buttonless" type="button" data-delete-copy-title aria-label="${htmlEscape(copy.copyPrompt)}">${iconCopy()}</button>
+                </div>
+                <p class="delete-modal-hint" data-delete-modal-hint>${htmlEscape(lang === "zh" ? "输入完整标题后才能删除。" : "Type the full title to enable delete.")}</p>
+              </div>
+            </div>
+            <label class="delete-modal-label">
+              <span>${htmlEscape(lang === "zh" ? "确认标题" : "Confirm title")}</span>
+              <input class="input delete-modal-input" type="text" data-delete-modal-input autocomplete="off" spellcheck="false" />
+            </label>
+            <div class="delete-modal-actions">
+              <button class="button secondary" type="button" data-delete-modal-close>${htmlEscape(copy.close)}</button>
+              <button class="button danger" type="button" data-delete-modal-submit disabled>${htmlEscape(copy.delete)}</button>
+            </div>
+            <div class="delete-modal-status" data-delete-modal-status></div>
+          </div>
+        </div>
+      </div>
+    `;
 }
 
 function normalizeCategory(value: string | null | undefined): string {
@@ -1307,6 +1449,7 @@ function renderDetailPage(request: Request, lang: Lang, theme: Theme, entry: Ent
               <div class="actions icon-row" style="margin-top:0; justify-content: space-between; align-items: center;">
                 <h2 style="margin:0;">${htmlEscape(copy.prompt)}</h2>
                 <div class="actions icon-row" style="margin:0; align-items:center;">
+                  ${canEdit ? `<button class="icon-action buttonless danger" type="button" data-admin-delete aria-label="${htmlEscape(copy.deletePrompt)}">${iconTrash()}</button>` : ""}
                   ${canEdit ? `<button class="icon-action buttonless" type="button" data-admin-edit aria-label="${htmlEscape(copy.edit)}">${iconEdit()}</button>` : ""}
                   <button class="icon-action" type="button" data-copy-prompt aria-label="${htmlEscape(copy.copyPrompt)}">${iconCopy()}</button>
                 </div>
@@ -1326,6 +1469,7 @@ function renderDetailPage(request: Request, lang: Lang, theme: Theme, entry: Ent
           <img class="modal-image" data-modal-image src="${htmlEscape(currentImage?.url || entry.coverImageUrl)}" alt="${attrEscape(entry.title)}" />
         </div>
       </div>
+      ${adminMode || canEdit ? renderDeleteModal(copy, lang) : ""}
     `,
     script: `
       const mainImage = document.getElementById('mainImage');
@@ -1337,9 +1481,21 @@ function renderDetailPage(request: Request, lang: Lang, theme: Theme, entry: Ent
       const nextImageButton = document.querySelector('[data-next-image]');
       const downloadImageButton = document.querySelector('[data-download-image]');
       const adminEditButton = document.querySelector('[data-admin-edit]');
+      const adminDeleteButton = document.querySelector('[data-admin-delete]');
+      const deleteModal = document.querySelector('[data-delete-modal]');
+      const deleteModalTitle = document.querySelector('[data-delete-modal-entry-title]');
+      const deleteModalInput = document.querySelector('[data-delete-modal-input]');
+      const deleteModalSubmit = document.querySelector('[data-delete-modal-submit]');
+      const deleteModalStatus = document.querySelector('[data-delete-modal-status]');
+      const deleteModalHint = document.querySelector('[data-delete-modal-hint]');
+      const deleteModalCopyTitle = document.querySelector('[data-delete-copy-title]');
+      const deleteModalCloseButtons = document.querySelectorAll('[data-delete-modal-close]');
       const detailImages = ${JSON.stringify(visibleImages)};
       let currentImageIndex = ${currentImageIndex};
       const adminEditUrl = ${canEdit ? JSON.stringify(`/admin?edit=${encodeURIComponent(entry.id)}`) : 'null'};
+      const deleteTarget = ${canEdit ? JSON.stringify({ id: entry.id, title: entry.title }) : 'null'};
+
+      const deleteConfirmText = ${JSON.stringify(lang === "zh" ? "输入完整标题后才能删除。" : "Type the full title to enable delete.")};
 
       const clampIndex = (value) => {
         if (!detailImages.length) return 0;
@@ -1373,6 +1529,69 @@ function renderDetailPage(request: Request, lang: Lang, theme: Theme, entry: Ent
         modal.hidden = true;
       };
 
+      const syncDeleteState = () => {
+        if (!(deleteModalSubmit instanceof HTMLButtonElement) || !(deleteModalInput instanceof HTMLInputElement) || !deleteTarget) return;
+        const matches = deleteModalInput.value.trim() === deleteTarget.title;
+        deleteModalSubmit.disabled = !matches;
+        if (deleteModalStatus instanceof HTMLElement) {
+          deleteModalStatus.textContent = matches ? '' : '';
+        }
+      };
+
+      const openDeleteModal = () => {
+        if (!deleteModal || !(deleteModalInput instanceof HTMLInputElement) || !(deleteModalTitle instanceof HTMLElement) || !deleteTarget) return;
+        deleteModalTitle.textContent = deleteTarget.title;
+        deleteModalInput.value = '';
+        if (deleteModalHint instanceof HTMLElement) {
+          deleteModalHint.textContent = deleteConfirmText;
+        }
+        if (deleteModalStatus instanceof HTMLElement) {
+          deleteModalStatus.textContent = '';
+        }
+        if (deleteModalSubmit instanceof HTMLButtonElement) {
+          deleteModalSubmit.disabled = true;
+        }
+        deleteModal.hidden = false;
+        window.setTimeout(() => deleteModalInput.focus(), 0);
+      };
+
+      const closeDeleteModal = () => {
+        if (!deleteModal) return;
+        deleteModal.hidden = true;
+        if (deleteModalInput instanceof HTMLInputElement) {
+          deleteModalInput.value = '';
+        }
+        if (deleteModalStatus instanceof HTMLElement) {
+          deleteModalStatus.textContent = '';
+        }
+        if (deleteModalSubmit instanceof HTMLButtonElement) {
+          deleteModalSubmit.disabled = true;
+        }
+      };
+
+      const deletePrompt = async () => {
+        if (!deleteTarget || !(deleteModalSubmit instanceof HTMLButtonElement)) return;
+        deleteModalSubmit.disabled = true;
+        if (deleteModalStatus instanceof HTMLElement) {
+          deleteModalStatus.textContent = ${JSON.stringify(lang === "zh" ? "正在删除..." : "Deleting...")};
+        }
+        try {
+          const response = await fetch('/api/admin/entries/' + encodeURIComponent(deleteTarget.id), { method: 'DELETE' });
+          const payload = await response.json().catch(() => ({}));
+          if (!response.ok) {
+            throw new Error(payload.error || ${JSON.stringify(lang === "zh" ? "删除失败" : "Delete failed")});
+          }
+          window.location.href = '/admin';
+        } catch (error) {
+          if (deleteModalStatus instanceof HTMLElement) {
+            deleteModalStatus.textContent = error instanceof Error ? error.message : ${JSON.stringify(lang === "zh" ? "删除失败" : "Delete failed.")};
+          }
+          if (deleteModalSubmit instanceof HTMLButtonElement && deleteModalInput instanceof HTMLInputElement) {
+            deleteModalSubmit.disabled = deleteModalInput.value.trim() !== deleteTarget.title;
+          }
+        }
+      };
+
       openOriginalButton?.addEventListener('click', openModal);
       prevImageButton?.addEventListener('click', () => {
         if (detailImages.length < 2) return;
@@ -1387,12 +1606,27 @@ function renderDetailPage(request: Request, lang: Lang, theme: Theme, entry: Ent
       adminEditButton?.addEventListener('click', () => {
         if (adminEditUrl) window.location.href = adminEditUrl + '&image=' + currentImageIndex;
       });
+      adminDeleteButton?.addEventListener('click', openDeleteModal);
       closeModalButton?.addEventListener('click', closeModal);
+      deleteModalCloseButtons.forEach((button) => button.addEventListener('click', closeDeleteModal));
+      deleteModalInput?.addEventListener('input', syncDeleteState);
+      deleteModalCopyTitle?.addEventListener('click', async () => {
+        if (deleteTarget) {
+          await navigator.clipboard.writeText(deleteTarget.title);
+        }
+      });
+      deleteModalSubmit?.addEventListener('click', deletePrompt);
       modal?.addEventListener('click', (event) => {
         if (event.target === modal) closeModal();
       });
+      deleteModal?.addEventListener('click', (event) => {
+        if (event.target === deleteModal) closeDeleteModal();
+      });
       document.addEventListener('keydown', (event) => {
         if (event.key === 'Escape') closeModal();
+      });
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') closeDeleteModal();
       });
       syncCurrentImage();
       const promptText = document.getElementById('promptText');
@@ -1456,7 +1690,10 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
               </div>
             </div>
           <aside class="panel admin-panel">
-            <h1>${htmlEscape(copy.addPrompt)}</h1>
+            <div class="admin-panel-heading">
+              <h1>${htmlEscape(copy.addPrompt)}</h1>
+              <button class="icon-action buttonless danger" id="deleteEntryButton" type="button" hidden aria-label="${htmlEscape(copy.deletePrompt)}">${iconTrash()}</button>
+            </div>
             <p class="helper">${htmlEscape(lang === "zh" ? "左侧是画布和基础信息，右侧填写提示词和备注。拖拽图片到左边，或者点击上传。" : "The left side is the canvas and basic info. Fill prompt and notes on the right. Drag images to the left or click upload.")}</p>
             <div class="stack">
               <label>${htmlEscape(copy.prompt)}
@@ -1472,15 +1709,13 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
               <div class="row one">
                 <button class="button" id="submitButton" type="submit">${htmlEscape(copy.publish)}</button>
               </div>
-              <div class="row one">
-                <button class="button danger" id="deleteEntryButton" type="button" hidden>${htmlEscape(copy.deletePrompt)}</button>
-              </div>
               <div id="formStatus" class="status"></div>
             </div>
           </aside>
           </section>
         </form>
       </main>
+      ${renderDeleteModal(ui(lang), lang)}
     `,
     script: `
       const form = document.getElementById('entryForm');
@@ -1495,6 +1730,14 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
       const entryIdField = document.getElementById('entryId');
       const removedImageKeysField = document.getElementById('removedImageKeys');
       const deleteEntryButton = document.getElementById('deleteEntryButton');
+      const deleteModal = document.querySelector('[data-delete-modal]');
+      const deleteModalTitle = document.querySelector('[data-delete-modal-entry-title]');
+      const deleteModalInput = document.querySelector('[data-delete-modal-input]');
+      const deleteModalSubmit = document.querySelector('[data-delete-modal-submit]');
+      const deleteModalStatus = document.querySelector('[data-delete-modal-status]');
+      const deleteModalHint = document.querySelector('[data-delete-modal-hint]');
+      const deleteModalCopyTitle = document.querySelector('[data-delete-copy-title]');
+      const deleteModalCloseButtons = document.querySelectorAll('[data-delete-modal-close]');
       const imagesField = document.getElementById('imagesField');
       const canvasPreviewImage = document.getElementById('canvasPreviewImage');
       const canvasEmptyState = document.getElementById('canvasEmptyState');
@@ -1513,6 +1756,7 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
       let removedImageKeys = [];
       let previewObjectUrl = '';
       let currentImageIndex = Number(new URLSearchParams(window.location.search).get('image') || 0);
+      let deleteTarget = null;
 
       function setCanvasBadge(text) {
         if (!(canvasCountBadge instanceof HTMLElement)) return;
@@ -1538,6 +1782,9 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
       function updateDeleteEntryButton() {
         if (!(deleteEntryButton instanceof HTMLButtonElement)) return;
         deleteEntryButton.hidden = !selectedEntryDetail;
+        deleteEntryButton.innerHTML = ${JSON.stringify(iconTrash())};
+        deleteEntryButton.setAttribute('aria-label', ${JSON.stringify(lang === "zh" ? "删除提示词" : "Delete prompt")});
+        deleteEntryButton.title = ${JSON.stringify(lang === "zh" ? "删除提示词" : "Delete prompt")};
       }
 
       function getSelectedImages() {
@@ -1711,6 +1958,65 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
 
       function getRemovedImageKeys() {
         return [...removedImageKeys];
+      }
+
+      function syncDeleteState() {
+        if (!(deleteModalSubmit instanceof HTMLButtonElement) || !(deleteModalInput instanceof HTMLInputElement) || !deleteTarget) return;
+        deleteModalSubmit.disabled = deleteModalInput.value.trim() !== deleteTarget.title;
+      }
+
+      function openDeleteModal() {
+        if (!deleteModal || !(deleteModalInput instanceof HTMLInputElement) || !(deleteModalTitle instanceof HTMLElement) || !selectedEntryDetail) return;
+        deleteTarget = { id: selectedEntryDetail.id, title: selectedEntryDetail.title };
+        deleteModalTitle.textContent = deleteTarget.title;
+        if (deleteModalHint instanceof HTMLElement) {
+          deleteModalHint.textContent = ${JSON.stringify(lang === "zh" ? "输入完整标题后才能删除。" : "Type the full title to enable delete.")};
+        }
+        if (deleteModalStatus instanceof HTMLElement) {
+          deleteModalStatus.textContent = '';
+        }
+        deleteModalInput.value = '';
+        deleteModal.hidden = false;
+        syncDeleteState();
+        window.setTimeout(() => deleteModalInput.focus(), 0);
+      }
+
+      function closeDeleteModal() {
+        if (!deleteModal) return;
+        deleteModal.hidden = true;
+        deleteTarget = null;
+        if (deleteModalInput instanceof HTMLInputElement) {
+          deleteModalInput.value = '';
+        }
+        if (deleteModalStatus instanceof HTMLElement) {
+          deleteModalStatus.textContent = '';
+        }
+        if (deleteModalSubmit instanceof HTMLButtonElement) {
+          deleteModalSubmit.disabled = true;
+        }
+      }
+
+      async function submitDeletePrompt() {
+        if (!deleteTarget || !(deleteModalSubmit instanceof HTMLButtonElement)) return;
+        const confirmedTitle = deleteModalInput instanceof HTMLInputElement ? deleteModalInput.value.trim() : '';
+        if (confirmedTitle !== deleteTarget.title) return;
+        deleteModalSubmit.disabled = true;
+        if (deleteModalStatus instanceof HTMLElement) {
+          deleteModalStatus.textContent = ${JSON.stringify(lang === "zh" ? "正在删除..." : "Deleting...")};
+        }
+        try {
+          const response = await fetch('/api/admin/entries/' + encodeURIComponent(deleteTarget.id), { method: 'DELETE' });
+          const payload = await response.json().catch(() => ({}));
+          if (!response.ok) {
+            throw new Error(payload.error || ${JSON.stringify(lang === "zh" ? "删除失败" : "Delete failed")});
+          }
+          window.location.href = '/admin';
+        } catch (error) {
+          if (deleteModalStatus instanceof HTMLElement) {
+            deleteModalStatus.textContent = error instanceof Error ? error.message : ${JSON.stringify(lang === "zh" ? "删除失败" : "Delete failed.")};
+          }
+          syncDeleteState();
+        }
       }
 
       function renderCanvasForCurrentState() {
@@ -1894,31 +2200,20 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
         setBlankCanvas();
       });
 
-      deleteEntryButton?.addEventListener('click', async () => {
-        if (!selectedEntryDetail || !(deleteEntryButton instanceof HTMLButtonElement)) return;
-        const confirmed = window.confirm(${JSON.stringify(lang === "zh" ? "确定删除这条提示词和所有关联图片吗？" : "Delete this prompt and all linked images?")});
-        if (!confirmed) return;
-        deleteEntryButton.disabled = true;
-        if (submitButton instanceof HTMLButtonElement) {
-          submitButton.disabled = true;
+      deleteEntryButton?.addEventListener('click', openDeleteModal);
+      deleteModalInput?.addEventListener('input', syncDeleteState);
+      deleteModalCopyTitle?.addEventListener('click', async () => {
+        if (selectedEntryDetail) {
+          await navigator.clipboard.writeText(selectedEntryDetail.title);
         }
-        status.textContent = ${JSON.stringify(lang === "zh" ? "正在删除..." : "Deleting...")};
-        try {
-          const response = await fetch('/api/admin/entries/' + encodeURIComponent(selectedEntryDetail.id), { method: 'DELETE' });
-          const payload = await response.json().catch(() => ({}));
-          if (!response.ok) {
-            throw new Error(payload.error || ${JSON.stringify(lang === "zh" ? "删除失败" : "Delete failed")});
-          }
-          status.textContent = ${JSON.stringify(lang === "zh" ? "已删除。" : "Deleted.")};
-          window.location.href = '/admin';
-        } catch (error) {
-          status.textContent = error instanceof Error ? error.message : ${JSON.stringify(lang === "zh" ? "删除失败" : "Delete failed.")};
-        } finally {
-          deleteEntryButton.disabled = false;
-          if (submitButton instanceof HTMLButtonElement) {
-            submitButton.disabled = false;
-          }
-        }
+      });
+      deleteModalSubmit?.addEventListener('click', submitDeletePrompt);
+      deleteModalCloseButtons.forEach((button) => button.addEventListener('click', closeDeleteModal));
+      deleteModal?.addEventListener('click', (event) => {
+        if (event.target === deleteModal) closeDeleteModal();
+      });
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') closeDeleteModal();
       });
 
       imagesField?.addEventListener('change', () => {
