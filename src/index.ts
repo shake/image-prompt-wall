@@ -82,6 +82,7 @@ const COPY: Record<Lang, {
   deleteConfirm: string;
   deleteFailed: string;
   deleted: string;
+  deletePrompt: string;
   detailPublic: string;
   detailPrivate: string;
   edit: string;
@@ -140,6 +141,7 @@ const COPY: Record<Lang, {
     deleteConfirm: "Delete this prompt and all linked images?",
     deleteFailed: "Delete failed.",
     deleted: "Deleted.",
+    deletePrompt: "Delete prompt",
     detailPublic: "Public",
     detailPrivate: "Private",
     edit: "Edit",
@@ -198,6 +200,7 @@ const COPY: Record<Lang, {
     deleteConfirm: "确定删除这条提示词和所有关联图片吗？",
     deleteFailed: "删除失败。",
     deleted: "已删除。",
+    deletePrompt: "删除提示词",
     detailPublic: "公开",
     detailPrivate: "私密",
     edit: "编辑",
@@ -1469,6 +1472,9 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
               <div class="row one">
                 <button class="button" id="submitButton" type="submit">${htmlEscape(copy.publish)}</button>
               </div>
+              <div class="row one">
+                <button class="button danger" id="deleteEntryButton" type="button" hidden>${htmlEscape(copy.deletePrompt)}</button>
+              </div>
               <div id="formStatus" class="status"></div>
             </div>
           </aside>
@@ -1488,6 +1494,7 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
       const publicField = document.getElementById('publicField');
       const entryIdField = document.getElementById('entryId');
       const removedImageKeyField = document.getElementById('removedImageKey');
+      const deleteEntryButton = document.getElementById('deleteEntryButton');
       const imagesField = document.getElementById('imagesField');
       const canvasPreviewImage = document.getElementById('canvasPreviewImage');
       const canvasEmptyState = document.getElementById('canvasEmptyState');
@@ -1517,6 +1524,11 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
         clearImagesButton.innerHTML = removalStaged ? ${JSON.stringify(iconRestore())} : ${JSON.stringify(iconClose())};
         clearImagesButton.setAttribute('aria-label', removalStaged ? ${JSON.stringify(lang === "zh" ? "恢复图片" : "Restore image")} : ${JSON.stringify(copy.clear)});
         clearImagesButton.title = removalStaged ? ${JSON.stringify(lang === "zh" ? "恢复图片" : "Restore image")} : ${JSON.stringify(copy.clear)};
+      }
+
+      function updateDeleteEntryButton() {
+        if (!(deleteEntryButton instanceof HTMLButtonElement)) return;
+        deleteEntryButton.hidden = !selectedEntryDetail;
       }
 
       function getSelectedImages() {
@@ -1730,6 +1742,7 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
         removalStaged = false;
         setRemovedImageKey('');
         updateClearButton();
+        updateDeleteEntryButton();
         if (selectedEntryDetail) {
           entryIdField.value = selectedEntryDetail.id;
           titleField.value = selectedEntryDetail.title;
@@ -1768,6 +1781,7 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
         removalStaged = false;
         setRemovedImageKey('');
         updateClearButton();
+        updateDeleteEntryButton();
         currentImageIndex = clampImageIndex(currentImageIndex, getSelectedImages().length || 1);
         selectedFileIndex = 0;
         titleField.value = detail.title;
@@ -1843,6 +1857,34 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
         }
         setBlankCanvas();
       });
+
+      deleteEntryButton?.addEventListener('click', async () => {
+        if (!selectedEntryDetail || !(deleteEntryButton instanceof HTMLButtonElement)) return;
+        const confirmed = window.confirm(${JSON.stringify(lang === "zh" ? "确定删除这条提示词和所有关联图片吗？" : "Delete this prompt and all linked images?")});
+        if (!confirmed) return;
+        deleteEntryButton.disabled = true;
+        if (submitButton instanceof HTMLButtonElement) {
+          submitButton.disabled = true;
+        }
+        status.textContent = ${JSON.stringify(lang === "zh" ? "正在删除..." : "Deleting...")};
+        try {
+          const response = await fetch('/api/admin/entries/' + encodeURIComponent(selectedEntryDetail.id), { method: 'DELETE' });
+          const payload = await response.json().catch(() => ({}));
+          if (!response.ok) {
+            throw new Error(payload.error || ${JSON.stringify(lang === "zh" ? "删除失败" : "Delete failed")});
+          }
+          status.textContent = ${JSON.stringify(lang === "zh" ? "已删除。" : "Deleted.")};
+          window.location.href = '/admin';
+        } catch (error) {
+          status.textContent = error instanceof Error ? error.message : ${JSON.stringify(lang === "zh" ? "删除失败" : "Delete failed.")};
+        } finally {
+          deleteEntryButton.disabled = false;
+          if (submitButton instanceof HTMLButtonElement) {
+            submitButton.disabled = false;
+          }
+        }
+      });
+
       imagesField?.addEventListener('change', () => {
         showSelectedFiles(imagesField.files ? Array.from(imagesField.files) : []);
       });
