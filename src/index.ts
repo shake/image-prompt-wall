@@ -1692,7 +1692,6 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
           <aside class="panel admin-panel">
             <div class="admin-panel-heading">
               <h1>${htmlEscape(copy.addPrompt)}</h1>
-              <button class="icon-action buttonless danger" id="deleteEntryButton" type="button" hidden aria-label="${htmlEscape(copy.deletePrompt)}">${iconTrash()}</button>
             </div>
             <p class="helper">${htmlEscape(lang === "zh" ? "左侧是画布和基础信息，右侧填写提示词和备注。拖拽图片到左边，或者点击上传。" : "The left side is the canvas and basic info. Fill prompt and notes on the right. Drag images to the left or click upload.")}</p>
             <div class="stack">
@@ -1715,7 +1714,6 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
           </section>
         </form>
       </main>
-      ${renderDeleteModal(ui(lang), lang)}
     `,
     script: `
       const form = document.getElementById('entryForm');
