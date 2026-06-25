@@ -1687,22 +1687,17 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
       function showSelectedFiles(files) {
         const nextFiles = Array.from(files || []);
         const activeCount = selectedEntryDetail ? Math.max(getSelectedImages().length - (removalStaged ? 1 : 0), 0) : 0;
-        const remainingSlots = ${MAX_IMAGES_PER_ENTRY} - activeCount;
+        const remainingSlots = ${MAX_IMAGES_PER_ENTRY} - activeCount - selectedFiles.length;
         if (nextFiles.length > remainingSlots) {
-          selectedFiles = [];
-          selectedFileIndex = 0;
           imagesField.value = '';
           status.textContent = ${JSON.stringify(lang === "zh" ? "最多只能保留 2 张图片。请先删除一张再添加。" : "You can keep at most 2 images. Delete one first, then add another.")};
-          if (selectedEntryDetail && !removalStaged) {
-            syncCanvasImage();
-          } else {
-            setBlankCanvas();
-          }
+          renderCanvasForCurrentState();
           updateCanvasHint();
           return;
         }
-        selectedFiles = nextFiles;
-        selectedFileIndex = 0;
+        const previousLength = selectedFiles.length;
+        selectedFiles = [...selectedFiles, ...nextFiles];
+        selectedFileIndex = previousLength;
         imagesField.value = '';
         revokePreviewObjectUrl();
         if (!selectedFiles.length) {
@@ -1713,7 +1708,7 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
           }
           return;
         }
-        renderSelectedFilePreview(0);
+        renderSelectedFilePreview(selectedFileIndex);
       }
 
       function resetToCurrentEntry() {
