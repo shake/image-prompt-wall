@@ -381,6 +381,10 @@ function iconCopy(): string {
   return `<svg viewBox="0 0 1024 1024" aria-hidden="true" width="18" height="18" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M394.666667 106.666667h448a74.666667 74.666667 0 0 1 74.666666 74.666666v448a74.666667 74.666667 0 0 1-74.666666 74.666667H394.666667a74.666667 74.666667 0 0 1-74.666667-74.666667V181.333333a74.666667 74.666667 0 0 1 74.666667-74.666666z m0 64a10.666667 10.666667 0 0 0-10.666667 10.666666v448a10.666667 10.666667 0 0 0 10.666667 10.666667h448a10.666667 10.666667 0 0 0 10.666666-10.666667V181.333333a10.666667 10.666667 0 0 0-10.666666-10.666666H394.666667z m245.333333 597.333333a32 32 0 0 1 64 0v74.666667a74.666667 74.666667 0 0 1-74.666667 74.666666H181.333333a74.666667 74.666667 0 0 1-74.666666-74.666666V394.666667a74.666667 74.666667 0 0 1 74.666666-74.666667h74.666667a32 32 0 0 1 0 64h-74.666667a10.666667 10.666667 0 0 0-10.666666 10.666667v448a10.666667 10.666667 0 0 0 10.666666 10.666666h448a10.666667 10.666667 0 0 0 10.666667-10.666666v-74.666667z"/></svg>`;
 }
 
+function iconInfo(): string {
+  return `<svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="9"/><path d="M12 10.5v5"/><path d="M12 7.5h.01"/></svg>`;
+}
+
 function iconClose(): string {
   return `<svg viewBox="0 0 1024 1024" aria-hidden="true" width="18" height="18" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M548.992 503.744L885.44 167.328a31.968 31.968 0 1 0-45.248-45.248L503.744 458.496 167.328 122.08a31.968 31.968 0 1 0-45.248 45.248l336.416 336.416L122.08 840.16a31.968 31.968 0 1 0 45.248 45.248l336.416-336.416L840.16 885.44a31.968 31.968 0 1 0 45.248-45.248L548.992 503.744z"/></svg>`;
 }
@@ -445,6 +449,9 @@ function buildSharedScript(): string {
     const menuToggle = document.querySelector('[data-menu-toggle]');
     const menuPopover = document.querySelector('[data-menu-popover]');
     const langSelect = document.querySelector('[data-lang-select]');
+    const categoryHelpModal = document.querySelector('[data-category-help-modal]');
+    const openCategoryHelpButton = document.querySelector('[data-open-category-help]');
+    const categoryHelpCloseButtons = document.querySelectorAll('[data-category-help-close]');
 
     const setCookie = (name, value) => {
       document.cookie = name + '=' + encodeURIComponent(value) + '; Path=/; Max-Age=31536000; SameSite=Lax';
@@ -476,6 +483,16 @@ function buildSharedScript(): string {
       menuToggle.setAttribute('aria-expanded', 'true');
     };
 
+    const openCategoryHelp = () => {
+      if (!categoryHelpModal) return;
+      categoryHelpModal.hidden = false;
+    };
+
+    const closeCategoryHelp = () => {
+      if (!categoryHelpModal) return;
+      categoryHelpModal.hidden = true;
+    };
+
     menuToggle?.addEventListener('click', (event) => {
       event.preventDefault();
       if (!menuPopover) return;
@@ -491,6 +508,21 @@ function buildSharedScript(): string {
 
     document.addEventListener('keydown', (event) => {
       if (event.key === 'Escape') closeMenu();
+    });
+
+    openCategoryHelpButton?.addEventListener('click', () => {
+      closeMenu();
+      openCategoryHelp();
+    });
+
+    categoryHelpCloseButtons.forEach((button) => button.addEventListener('click', closeCategoryHelp));
+
+    categoryHelpModal?.addEventListener('click', (event) => {
+      if (event.target === categoryHelpModal) closeCategoryHelp();
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') closeCategoryHelp();
     });
 
     themeButtons.forEach((button) => {
@@ -676,6 +708,19 @@ function renderPage(options: {
         font-weight: 700;
       }
       .menu-link.logout { color: #df5b31; }
+      .menu-link.info {
+        color: var(--text);
+        width: 100%;
+        text-align: left;
+        border: 0;
+        background: transparent;
+        font: inherit;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .menu-link.info:hover {
+        background: color-mix(in srgb, var(--bg) 72%, white);
+      }
       .hero { padding: 24px 0 18px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
       .pill { display: inline-flex; align-items: center; gap: 8px; padding: 12px 16px; border-radius: 999px; background: color-mix(in srgb, var(--panel-strong) 84%, var(--bg) 16%); border: 1px solid var(--line); color: var(--text); text-decoration: none; font-weight: 600; box-shadow: var(--shadow); }
       .pill.active { background: var(--pill-active-bg); color: var(--pill-active-text); border-color: var(--pill-active-bg); }
@@ -965,6 +1010,68 @@ function renderPage(options: {
         color: var(--muted);
         font-size: 14px;
       }
+      .info-modal-card {
+        width: min(92vw, 760px);
+        max-height: 86vh;
+      }
+      .info-modal-window {
+        position: relative;
+        width: 100%;
+        max-height: 86vh;
+        overflow: auto;
+        border-radius: 28px;
+        border: 1px solid var(--line);
+        background: var(--panel-strong);
+        box-shadow: var(--shadow);
+        padding: 26px;
+      }
+      .info-modal-close {
+        position: absolute;
+        top: 14px;
+        right: 14px;
+      }
+      .info-modal-header {
+        display: grid;
+        gap: 10px;
+        padding-right: 52px;
+      }
+      .info-modal-header h2 {
+        margin: 0;
+        font-size: 28px;
+        line-height: 1.15;
+        letter-spacing: -0.03em;
+      }
+      .info-modal-header p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.6;
+      }
+      .info-modal-body {
+        display: grid;
+        gap: 18px;
+        margin-top: 18px;
+      }
+      .info-modal-section {
+        display: grid;
+        gap: 8px;
+      }
+      .info-modal-section h3 {
+        margin: 0;
+        font-size: 15px;
+        letter-spacing: 0.01em;
+      }
+      .info-modal-section p {
+        margin: 0;
+        line-height: 1.6;
+        color: var(--text);
+      }
+      .info-modal-list {
+        margin: 0;
+        padding-left: 20px;
+        display: grid;
+        gap: 8px;
+        line-height: 1.55;
+      }
       .modal {
         position: fixed;
         inset: 0;
@@ -1114,6 +1221,7 @@ function renderPage(options: {
   </head>
   <body>
     ${options.body}
+    ${renderCategoryHelpModal(options.lang)}
     <script>${buildSharedScript()}</script>
     ${options.script ? `<script>${options.script}</script>` : ""}
   </body>
@@ -1151,6 +1259,8 @@ function renderTopBar(active: "home" | "admin", lang: Lang, theme: Theme, title:
                 <button class="menu-item ${theme === "warm" ? "active" : ""}" type="button" data-theme-value="warm" aria-pressed="${theme === "warm" ? "true" : "false"}">${iconSun()}${htmlEscape(themeLabel(lang, "warm"))}</button>
                 <button class="menu-item ${theme === "dark" ? "active" : ""}" type="button" data-theme-value="dark" aria-pressed="${theme === "dark" ? "true" : "false"}">${iconMoon()}${htmlEscape(themeLabel(lang, "dark"))}</button>
               </div>
+              <hr class="menu-divider" />
+              <button class="menu-link info" type="button" data-open-category-help>${iconInfo()}${htmlEscape(lang === "zh" ? "图片分类" : "Image Categories")}</button>
               ${showLogout ? `<hr class="menu-divider" /><a class="menu-link logout" href="/cdn-cgi/access/logout">${htmlEscape(copy.logout)}</a>` : ""}
             </div>
           </div>
@@ -1186,6 +1296,69 @@ function renderDeleteModal(copy: ReturnType<typeof ui>, lang: Lang): string {
               <button class="button danger" type="button" data-delete-modal-submit disabled>${htmlEscape(copy.delete)}</button>
             </div>
             <div class="delete-modal-status" data-delete-modal-status></div>
+          </div>
+        </div>
+      </div>
+    `;
+}
+
+function renderCategoryHelpModal(lang: Lang): string {
+  const isZh = lang === "zh";
+  return `
+      <div class="modal" data-category-help-modal hidden>
+        <div class="modal-card info-modal-card" role="dialog" aria-modal="true" aria-labelledby="categoryHelpTitle">
+          <div class="info-modal-window">
+            <button class="modal-close info-modal-close" type="button" data-category-help-close aria-label="${htmlEscape(isZh ? "关闭" : "Close")}">${iconClose()}</button>
+            <div class="info-modal-header">
+              <h2 id="categoryHelpTitle">${htmlEscape(isZh ? "图片分类" : "Image Categories")}</h2>
+              <p>${htmlEscape(isZh ? "分类和标签都用于帮助你整理和检索图片，但它们的职责不一样。" : "Categories and tags both help organize and search your images, but they do different jobs.")}</p>
+            </div>
+            <div class="info-modal-body">
+              <section class="info-modal-section">
+                <h3>${htmlEscape(isZh ? "边界" : "Boundary")}</h3>
+                <p>${htmlEscape(isZh ? "分类：只回答“这张图属于什么视觉类型”。标签：只回答“这张图讲什么、有什么风格、适合什么场景”。" : "Category: only answers what kind of visual work the image is. Tags: only describe what it is about, what style it has, and what it is suited for.")}</p>
+                <p>${htmlEscape(isZh ? "更直白地说：分类 = 外壳，标签 = 细节。" : "Put more simply: category = shell, tags = details.")}</p>
+              </section>
+              <section class="info-modal-section">
+                <h3>${htmlEscape(isZh ? "分类怎么用" : "How to use categories")}</h3>
+                <p>${htmlEscape(isZh ? "分类尽量保持少而稳定，主要用于首页筛选和快速识别图片类型。" : "Keep categories few and stable. Use them for filtering and for a quick visual read on the homepage.")}</p>
+                <ul class="info-modal-list">
+                  <li>${htmlEscape(isZh ? "信息图" : "Infographic")}</li>
+                  <li>${htmlEscape(isZh ? "海报" : "Poster")}</li>
+                  <li>${htmlEscape(isZh ? "插画" : "Illustration")}</li>
+                  <li>${htmlEscape(isZh ? "摄影" : "Photography")}</li>
+                  <li>${htmlEscape(isZh ? "界面" : "UI")}</li>
+                  <li>${htmlEscape(isZh ? "字体排版" : "Typography")}</li>
+                </ul>
+              </section>
+              <section class="info-modal-section">
+                <h3>${htmlEscape(isZh ? "标签怎么用" : "How to use tags")}</h3>
+                <p>${htmlEscape(isZh ? "标签负责补充分类没说完的内容。" : "Tags add the details categories do not cover.")}</p>
+                <ul class="info-modal-list">
+                  <li>${htmlEscape(isZh ? "主题：旅行、美食、数学、品牌" : "Topic: travel, food, math, branding")}</li>
+                  <li>${htmlEscape(isZh ? "风格：手绘、水彩、极简、复古" : "Style: hand-drawn, watercolor, minimal, retro")}</li>
+                  <li>${htmlEscape(isZh ? "颜色：蓝色、暖色、黑白" : "Color: blue, warm, black-and-white")}</li>
+                  <li>${htmlEscape(isZh ? "场景：导览、教学、宣传、封面" : "Use case: guide, teaching, promotion, cover")}</li>
+                  <li>${htmlEscape(isZh ? "元素：地图、人物、城市、建筑" : "Elements: map, character, city, architecture")}</li>
+                </ul>
+              </section>
+              <section class="info-modal-section">
+                <h3>${htmlEscape(isZh ? "怎么判断放哪边" : "How to decide")}</h3>
+                <p>${htmlEscape(isZh ? "这个词会影响你在首页怎么筛选吗？会，就放分类。这个词只是补充说明、帮助搜索、描述内容吗？是，就放标签。" : "If a term changes how you filter on the homepage, put it in categories. If it only adds context, helps search, or describes the image, put it in tags.")}</p>
+              </section>
+              <section class="info-modal-section">
+                <h3>${htmlEscape(isZh ? "例子" : "Examples")}</h3>
+                <ul class="info-modal-list">
+                  <li>${htmlEscape(isZh ? "清迈手绘地图：分类 = 插画；标签 = 地图、旅行、手绘、水彩、导览" : "Chiang Mai hand-drawn map: category = Illustration; tags = map, travel, hand-drawn, watercolor, guide")}</li>
+                  <li>${htmlEscape(isZh ? "数学知识讲解图：分类 = 信息图；标签 = 数学、教育、蓝色、教学" : "Math explainer: category = Infographic; tags = math, education, blue, teaching")}</li>
+                  <li>${htmlEscape(isZh ? "产品宣传海报：分类 = 海报；标签 = 品牌、促销、极简、商业" : "Product poster: category = Poster; tags = branding, promotion, minimal, business")}</li>
+                </ul>
+              </section>
+              <section class="info-modal-section">
+                <h3>${htmlEscape(isZh ? "一句话总结" : "Summary")}</h3>
+                <p>${htmlEscape(isZh ? "分类少、固定、用于浏览；标签多、灵活、用于检索。" : "Categories are few, stable, and used for browsing. Tags are flexible and used for searching.")}</p>
+              </section>
+            </div>
           </div>
         </div>
       </div>
