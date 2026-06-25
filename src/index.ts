@@ -1503,6 +1503,7 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
       let selectedEntryId = '';
       let selectedEntryDetail = null;
       let selectedFiles = [];
+      let selectedFileIndex = 0;
       let removalStaged = false;
       let previewObjectUrl = '';
       let currentImageIndex = Number(new URLSearchParams(window.location.search).get('image') || 0);
@@ -1540,7 +1541,7 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
 
       function updateCanvasNavigation() {
         const images = getSelectedImages();
-        const canNavigate = !removalStaged && images.length > 1 && selectedFiles.length === 0;
+        const canNavigate = !removalStaged && ((selectedFiles.length > 1) || (images.length > 1 && selectedFiles.length === 0));
         if (canvasPrevButton instanceof HTMLButtonElement) {
           canvasPrevButton.hidden = !canNavigate;
         }
@@ -1557,6 +1558,23 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
             downloadCurrentImageButton.href = currentImage;
           }
         }
+      }
+
+      function renderSelectedFilePreview(index) {
+        if (!selectedFiles.length) return;
+        selectedFileIndex = clampImageIndex(index, selectedFiles.length);
+        revokePreviewObjectUrl();
+        previewObjectUrl = URL.createObjectURL(selectedFiles[selectedFileIndex]);
+        if (canvasPreviewImage instanceof HTMLImageElement) {
+          canvasPreviewImage.src = previewObjectUrl;
+          canvasPreviewImage.alt = selectedFiles[selectedFileIndex].name || ${JSON.stringify(emptyCanvasLabel)};
+          canvasPreviewImage.hidden = false;
+        }
+        if (canvasEmptyState instanceof HTMLElement) {
+          canvasEmptyState.hidden = true;
+        }
+        updateCanvasNavigation();
+        updateCanvasHint();
       }
 
       function syncCanvasImage() {
@@ -1587,6 +1605,7 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
 
       function setBlankCanvas() {
         revokePreviewObjectUrl();
+        selectedFileIndex = 0;
         if (canvasPreviewImage instanceof HTMLImageElement) {
           canvasPreviewImage.removeAttribute('src');
           canvasPreviewImage.alt = '';
@@ -1671,6 +1690,7 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
         const remainingSlots = ${MAX_IMAGES_PER_ENTRY} - activeCount;
         if (nextFiles.length > remainingSlots) {
           selectedFiles = [];
+          selectedFileIndex = 0;
           imagesField.value = '';
           status.textContent = ${JSON.stringify(lang === "zh" ? "最多只能保留 2 张图片。请先删除一张再添加。" : "You can keep at most 2 images. Delete one first, then add another.")};
           if (selectedEntryDetail && !removalStaged) {
@@ -1682,6 +1702,7 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
           return;
         }
         selectedFiles = nextFiles;
+        selectedFileIndex = 0;
         imagesField.value = '';
         revokePreviewObjectUrl();
         if (!selectedFiles.length) {
@@ -1692,21 +1713,12 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
           }
           return;
         }
-        previewObjectUrl = URL.createObjectURL(selectedFiles[0]);
-        if (canvasPreviewImage instanceof HTMLImageElement) {
-          canvasPreviewImage.src = previewObjectUrl;
-          canvasPreviewImage.alt = selectedFiles[0].name || ${JSON.stringify(emptyCanvasLabel)};
-          canvasPreviewImage.hidden = false;
-        }
-        if (canvasEmptyState instanceof HTMLElement) {
-          canvasEmptyState.hidden = true;
-        }
-        updateCanvasNavigation();
-        updateCanvasHint();
+        renderSelectedFilePreview(0);
       }
 
       function resetToCurrentEntry() {
         selectedFiles = [];
+        selectedFileIndex = 0;
         imagesField.value = '';
         removalStaged = false;
         setRemovedImageKey('');
@@ -1750,6 +1762,7 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
         setRemovedImageKey('');
         updateClearButton();
         currentImageIndex = clampImageIndex(currentImageIndex, getSelectedImages().length || 1);
+        selectedFileIndex = 0;
         titleField.value = detail.title;
         ensureCategoryOption(detail.category);
         tagsField.value = (detail.tags || []).join(', ');
@@ -1775,6 +1788,10 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
         imagesField?.click();
       });
       canvasPrevButton?.addEventListener('click', () => {
+        if (selectedFiles.length > 1) {
+          renderSelectedFilePreview(selectedFileIndex - 1);
+          return;
+        }
         const images = getSelectedImages();
         if (images.length < 2 || selectedFiles.length > 0) return;
         currentImageIndex = (currentImageIndex - 1 + images.length) % images.length;
@@ -1782,6 +1799,10 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
         updateCanvasHint();
       });
       canvasNextButton?.addEventListener('click', () => {
+        if (selectedFiles.length > 1) {
+          renderSelectedFilePreview(selectedFileIndex + 1);
+          return;
+        }
         const images = getSelectedImages();
         if (images.length < 2 || selectedFiles.length > 0) return;
         currentImageIndex = (currentImageIndex + 1) % images.length;
@@ -1791,6 +1812,7 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
       clearImagesButton?.addEventListener('click', () => {
         if (selectedFiles.length > 0) {
           selectedFiles = [];
+          selectedFileIndex = 0;
           imagesField.value = '';
           updateCanvasHint();
           renderCanvasForCurrentState();
