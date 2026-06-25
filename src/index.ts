@@ -568,6 +568,14 @@ function renderPage(options: {
       html[data-theme="dark"] .topbar { background: rgba(10, 13, 18, 0.76); }
       .topbar-inner { width: min(1720px, calc(100vw - 24px)); margin: 0 auto; display: grid; grid-template-columns: 1fr auto; gap: 16px; padding: 18px 0; align-items: center; }
       .brand { display: flex; flex-direction: column; gap: 6px; }
+      .brand-home {
+        color: inherit;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: baseline;
+        width: fit-content;
+      }
+      .brand-home:hover { opacity: 0.88; }
       .brand h1 { margin: 0; font-size: clamp(28px, 3vw, 44px); letter-spacing: -0.04em; }
       .brand p { margin: 0; color: var(--muted); font-size: 15px; }
       .toolbar { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; align-items: center; }
@@ -999,7 +1007,9 @@ function renderTopBar(active: "home" | "admin", lang: Lang, theme: Theme, title:
   return `<header class="topbar">
     <div class="topbar-inner">
       <div class="brand">
-        <h1>${htmlEscape(title)}</h1>
+        <a class="brand-home" href="/" aria-label="${htmlEscape(title)}">
+          <h1>${htmlEscape(title)}</h1>
+        </a>
         <p>${htmlEscape(subtitle)}</p>
       </div>
       <div class="toolbar">
