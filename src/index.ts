@@ -1532,13 +1532,25 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
         return images.slice(0, ${MAX_IMAGES_PER_ENTRY});
       }
 
+      function getVisibleEntryImages() {
+        const images = getSelectedImages();
+        if (!selectedEntryDetail || !removalStaged) {
+          return images;
+        }
+        const removedImageKey = getRemovedImageKey();
+        if (!removedImageKey) {
+          return images;
+        }
+        return images.filter((image) => image.key !== removedImageKey);
+      }
+
       function clampImageIndex(index, length) {
         if (!length) return 0;
         return Math.min(Math.max(Number(index) || 0, 0), length - 1);
       }
 
       function updateCanvasNavigation() {
-        const images = getSelectedImages();
+        const images = getVisibleEntryImages();
         const canNavigate = !removalStaged && ((selectedFiles.length > 1) || (images.length > 1 && selectedFiles.length === 0));
         if (canvasPrevButton instanceof HTMLButtonElement) {
           canvasPrevButton.hidden = !canNavigate;
@@ -1576,8 +1588,9 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
       }
 
       function syncCanvasImage() {
-        const images = getSelectedImages();
+        const images = getVisibleEntryImages();
         if (!images.length) {
+          setBlankCanvas();
           updateCanvasNavigation();
           return;
         }
@@ -1629,11 +1642,12 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
           return;
         }
         if (selectedEntryDetail && removalStaged) {
-          setCanvasBadge(${JSON.stringify(lang === "zh" ? "已标记删除，点击恢复" : "Marked for deletion. Click restore.")});
+          const visibleImages = getVisibleEntryImages();
+          setCanvasBadge((visibleImages.length || 0) + ' ${lang === "zh" ? "张图" : "images"} · ' + ${JSON.stringify(lang === "zh" ? "点击恢复可撤销删除" : "Click restore to undo deletion.")});
           return;
         }
         if (selectedEntryDetail) {
-          setCanvasBadge((getSelectedImages().length || 1) + ' ${lang === "zh" ? "张图" : "images"}');
+          setCanvasBadge((getVisibleEntryImages().length || 1) + ' ${lang === "zh" ? "张图" : "images"}');
           return;
         }
         setCanvasBadge('');
@@ -1667,7 +1681,7 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
           showSelectedFiles(selectedFiles);
           return;
         }
-        if (selectedEntryDetail && !removalStaged) {
+        if (selectedEntryDetail) {
           showDetailCanvas(selectedEntryDetail);
           return;
         }
@@ -1677,7 +1691,7 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
 
       function showDetailCanvas(detail) {
         revokePreviewObjectUrl();
-        currentImageIndex = clampImageIndex(currentImageIndex, getSelectedImages().length || 1);
+        currentImageIndex = clampImageIndex(currentImageIndex, getVisibleEntryImages().length || 1);
         syncCanvasImage();
         updateCanvasHint();
       }
@@ -1822,8 +1836,8 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
             const currentImage = getSelectedImages()[currentImageIndex] || getSelectedImages()[0];
             setRemovedImageKey(currentImage?.key || selectedEntryDetail.coverImageKey || '');
             updateClearButton();
-            setBlankCanvas();
-            updateCanvasHint();
+            currentImageIndex = clampImageIndex(currentImageIndex, getVisibleEntryImages().length || 1);
+            showDetailCanvas(selectedEntryDetail);
           }
           return;
         }
