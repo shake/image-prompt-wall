@@ -1468,7 +1468,6 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
               </label>
               <div class="row one">
                 <button class="button" id="submitButton" type="submit">${htmlEscape(copy.publish)}</button>
-                <button class="button secondary" id="resetButton" type="button">${htmlEscape(copy.reset)}</button>
               </div>
               <div id="formStatus" class="status"></div>
             </div>
@@ -1481,7 +1480,6 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
       const form = document.getElementById('entryForm');
       const status = document.getElementById('formStatus');
       const submitButton = document.getElementById('submitButton');
-      const resetButton = document.getElementById('resetButton');
       const titleField = document.getElementById('titleField');
       const categoryField = document.getElementById('categoryField');
       const tagsField = document.getElementById('tagsField');
@@ -1890,7 +1888,6 @@ function renderAdminComposePage(request: Request, lang: Lang, theme: Theme, cate
         }
       });
 
-      resetButton.addEventListener('click', resetToCurrentEntry);
     `,
   });
 }
