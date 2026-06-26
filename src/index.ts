@@ -1103,14 +1103,44 @@ function renderPage(options: {
         padding: 24px;
         background: rgba(0, 0, 0, 0.72);
         backdrop-filter: blur(10px);
+        overflow: auto;
       }
       .modal[hidden] { display: none; }
+      .modal.actual-size {
+        place-items: start center;
+      }
       .modal-card {
         position: relative;
         width: min(92vw, 1280px);
         max-height: 92vh;
         display: grid;
         place-items: center;
+      }
+      .modal-card.actual-size {
+        width: max-content;
+        max-width: none;
+        max-height: none;
+        justify-items: start;
+      }
+      .modal-toolbar {
+        position: absolute;
+        top: -12px;
+        right: 40px;
+        z-index: 1;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .modal-toolbar .button {
+        height: 44px;
+        padding: 0 14px;
+        border-radius: 999px;
+        background: rgba(10, 10, 10, 0.82);
+        color: #fff;
+        border-color: rgba(255,255,255,0.18);
+        box-shadow: 0 10px 24px rgba(0,0,0,0.22);
+        font-size: 13px;
+        font-weight: 700;
       }
       .modal-image {
         max-width: 100%;
@@ -1119,6 +1149,12 @@ function renderPage(options: {
         border-radius: 18px;
         box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
         background: #111;
+      }
+      .modal-card.actual-size .modal-image {
+        max-width: none;
+        max-height: none;
+        width: auto;
+        height: auto;
       }
       .modal-close {
         position: absolute;
@@ -1660,7 +1696,10 @@ function renderDetailPage(request: Request, lang: Lang, theme: Theme, entry: Ent
         </section>
       </main>
       <div class="modal" data-image-modal hidden>
-        <div class="modal-card" role="dialog" aria-modal="true" aria-label="${htmlEscape(copy.viewOriginal)}">
+        <div class="modal-card" data-image-modal-card role="dialog" aria-modal="true" aria-label="${htmlEscape(copy.viewOriginal)}">
+          <div class="modal-toolbar">
+            <button class="button" type="button" data-toggle-image-scale aria-pressed="false" aria-label="${htmlEscape(lang === "zh" ? "切换为实际大小" : "Switch to actual size")}">100%</button>
+          </div>
           <button class="modal-close" type="button" data-close-modal aria-label="${htmlEscape(copy.close)}">${iconClose()}</button>
           <img class="modal-image" data-modal-image src="${htmlEscape(currentImage?.url || entry.coverImageUrl)}" alt="${attrEscape(entry.title)}" />
         </div>
@@ -1670,9 +1709,11 @@ function renderDetailPage(request: Request, lang: Lang, theme: Theme, entry: Ent
     script: `
       const mainImage = document.getElementById('mainImage');
       const modal = document.querySelector('[data-image-modal]');
+      const modalCard = document.querySelector('[data-image-modal-card]');
       const modalImage = document.querySelector('[data-modal-image]');
       const openOriginalButton = document.querySelector('[data-open-original]');
       const closeModalButton = document.querySelector('[data-close-modal]');
+      const toggleImageScaleButton = document.querySelector('[data-toggle-image-scale]');
       const prevImageButton = document.querySelector('[data-prev-image]');
       const nextImageButton = document.querySelector('[data-next-image]');
       const downloadImageButton = document.querySelector('[data-download-image]');
@@ -1692,6 +1733,7 @@ function renderDetailPage(request: Request, lang: Lang, theme: Theme, entry: Ent
       let currentImageIndex = ${currentImageIndex};
       const adminEditUrl = ${canEdit ? JSON.stringify(`/admin?edit=${encodeURIComponent(entry.id)}`) : 'null'};
       const deleteTarget = ${canEdit ? JSON.stringify({ id: entry.id, title: entry.title }) : 'null'};
+      let imageScaleMode = 'fit';
 
       const deleteConfirmText = ${JSON.stringify(lang === "zh" ? "输入完整标题后才能删除。" : "Type the full title to enable delete.")};
 
@@ -1719,12 +1761,25 @@ function renderDetailPage(request: Request, lang: Lang, theme: Theme, entry: Ent
       const openModal = () => {
         if (!modal || !modalImage || !mainImage) return;
         modalImage.src = mainImage.src;
+        imageScaleMode = 'fit';
+        applyImageScaleMode();
         modal.hidden = false;
       };
 
       const closeModal = () => {
         if (!modal) return;
         modal.hidden = true;
+      };
+
+      const applyImageScaleMode = () => {
+        if (!(modal instanceof HTMLElement) || !(modalImage instanceof HTMLImageElement) || !(modalCard instanceof HTMLElement) || !(toggleImageScaleButton instanceof HTMLButtonElement)) return;
+        const actualSize = imageScaleMode === 'actual';
+        modal.classList.toggle('actual-size', actualSize);
+        modalCard.classList.toggle('actual-size', actualSize);
+        modalImage.classList.toggle('actual-size', actualSize);
+        toggleImageScaleButton.textContent = actualSize ? ${JSON.stringify(lang === "zh" ? "适配窗口" : "Fit")} : "100%";
+        toggleImageScaleButton.setAttribute('aria-pressed', actualSize ? 'true' : 'false');
+        toggleImageScaleButton.setAttribute('aria-label', actualSize ? ${JSON.stringify(lang === "zh" ? "切换为适配窗口" : "Switch to fit mode")} : ${JSON.stringify(lang === "zh" ? "切换为实际大小" : "Switch to actual size")});
       };
 
       const syncDeleteState = () => {
@@ -1831,6 +1886,10 @@ function renderDetailPage(request: Request, lang: Lang, theme: Theme, entry: Ent
       };
 
       openOriginalButton?.addEventListener('click', openModal);
+      toggleImageScaleButton?.addEventListener('click', () => {
+        imageScaleMode = imageScaleMode === 'fit' ? 'actual' : 'fit';
+        applyImageScaleMode();
+      });
       prevImageButton?.addEventListener('click', () => {
         if (detailImages.length < 2) return;
         currentImageIndex = (currentImageIndex - 1 + detailImages.length) % detailImages.length;
@@ -1866,6 +1925,7 @@ function renderDetailPage(request: Request, lang: Lang, theme: Theme, entry: Ent
       document.addEventListener('keydown', (event) => {
         if (event.key === 'Escape') closeDeleteModal();
       });
+      applyImageScaleMode();
       syncCurrentImage();
       document.querySelector('[data-copy-prompt]')?.addEventListener('click', copyPrompt);
     `,
