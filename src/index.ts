@@ -825,6 +825,15 @@ function renderPage(options: {
         text-decoration: none;
         box-shadow: none;
       }
+      .icon-action:hover,
+      .icon-action:focus-visible {
+        background: color-mix(in srgb, var(--panel-strong) 74%, var(--bg) 26%);
+        border-color: color-mix(in srgb, var(--line) 60%, var(--text) 40%);
+        transform: translateY(-1px);
+      }
+      .icon-action:active {
+        transform: translateY(0);
+      }
       .icon-action.buttonless {
         padding: 0;
         cursor: pointer;
@@ -909,6 +918,19 @@ function renderPage(options: {
         display: inline-flex;
         align-items: center;
         gap: 8px;
+      }
+      .copy-status {
+        min-width: 64px;
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 600;
+        align-self: center;
+      }
+      .copy-status.success {
+        color: #2f855a;
+      }
+      .copy-status.error {
+        color: #c03b2d;
       }
       .admin-panel-heading {
         display: flex;
@@ -1625,6 +1647,7 @@ function renderDetailPage(request: Request, lang: Lang, theme: Theme, entry: Ent
                   ${canEdit ? `<button class="icon-action buttonless danger" type="button" data-admin-delete aria-label="${htmlEscape(copy.deletePrompt)}">${iconTrash()}</button>` : ""}
                   ${canEdit ? `<button class="icon-action buttonless" type="button" data-admin-edit aria-label="${htmlEscape(copy.edit)}">${iconEdit()}</button>` : ""}
                   <button class="icon-action" type="button" data-copy-prompt aria-label="${htmlEscape(copy.copyPrompt)}">${iconCopy()}</button>
+                  <span class="copy-status" data-copy-status aria-live="polite"></span>
                 </div>
               </div>
               <pre class="prompt" id="promptText">${htmlEscape(entry.prompt)}</pre>
@@ -1655,6 +1678,7 @@ function renderDetailPage(request: Request, lang: Lang, theme: Theme, entry: Ent
       const downloadImageButton = document.querySelector('[data-download-image]');
       const adminEditButton = document.querySelector('[data-admin-edit]');
       const adminDeleteButton = document.querySelector('[data-admin-delete]');
+      const copyStatus = document.querySelector('[data-copy-status]');
       const deleteModal = document.querySelector('[data-delete-modal]');
       const deleteModalTitle = document.querySelector('[data-delete-modal-entry-title]');
       const deleteModalInput = document.querySelector('[data-delete-modal-input]');
@@ -1663,6 +1687,7 @@ function renderDetailPage(request: Request, lang: Lang, theme: Theme, entry: Ent
       const deleteModalHint = document.querySelector('[data-delete-modal-hint]');
       const deleteModalCopyTitle = document.querySelector('[data-delete-copy-title]');
       const deleteModalCloseButtons = document.querySelectorAll('[data-delete-modal-close]');
+      const promptText = document.getElementById('promptText');
       const detailImages = ${JSON.stringify(visibleImages)};
       let currentImageIndex = ${currentImageIndex};
       const adminEditUrl = ${canEdit ? JSON.stringify(`/admin?edit=${encodeURIComponent(entry.id)}`) : 'null'};
@@ -1765,6 +1790,46 @@ function renderDetailPage(request: Request, lang: Lang, theme: Theme, entry: Ent
         }
       };
 
+      const setCopyStatus = (message, kind = '') => {
+        if (!(copyStatus instanceof HTMLElement)) return;
+        copyStatus.textContent = message;
+        copyStatus.classList.remove('success', 'error');
+        if (kind) copyStatus.classList.add(kind);
+      };
+
+      const clearCopyStatus = () => {
+        if (!(copyStatus instanceof HTMLElement)) return;
+        copyStatus.textContent = '';
+        copyStatus.classList.remove('success', 'error');
+      };
+
+      let copyStatusTimer = 0;
+
+      const copyPrompt = async () => {
+        const text = promptText?.textContent || ${JSON.stringify(entry.prompt)};
+        try {
+          await navigator.clipboard.writeText(text);
+          setCopyStatus(${JSON.stringify(lang === "zh" ? "已复制" : "Copied")}, 'success');
+        } catch {
+          try {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.setAttribute('readonly', 'true');
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            textarea.remove();
+            setCopyStatus(${JSON.stringify(lang === "zh" ? "已复制" : "Copied")}, 'success');
+          } catch {
+            setCopyStatus(${JSON.stringify(lang === "zh" ? "复制失败" : "Copy failed")}, 'error');
+          }
+        }
+        window.clearTimeout(copyStatusTimer);
+        copyStatusTimer = window.setTimeout(clearCopyStatus, 1800);
+      };
+
       openOriginalButton?.addEventListener('click', openModal);
       prevImageButton?.addEventListener('click', () => {
         if (detailImages.length < 2) return;
@@ -1802,10 +1867,7 @@ function renderDetailPage(request: Request, lang: Lang, theme: Theme, entry: Ent
         if (event.key === 'Escape') closeDeleteModal();
       });
       syncCurrentImage();
-      const promptText = document.getElementById('promptText');
-      document.querySelector('[data-copy-prompt]')?.addEventListener('click', async () => {
-        await navigator.clipboard.writeText(promptText?.textContent || ${JSON.stringify(entry.prompt)});
-      });
+      document.querySelector('[data-copy-prompt]')?.addEventListener('click', copyPrompt);
     `,
   });
 }
